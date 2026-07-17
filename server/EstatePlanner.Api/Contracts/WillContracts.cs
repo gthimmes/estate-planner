@@ -17,6 +17,12 @@ public record SaveWillRequest(
     List<WillGiftDto> Gifts,
     List<ResiduaryShareDto> ResiduaryShares);
 
+public record MarkExecutedRequest(
+    DateOnly ExecutedOn,
+    string Witness1Name,
+    string Witness2Name,
+    string StorageLocation);
+
 public record WillPlanResponse(
     Guid Id,
     Guid? TestatorPersonId,
@@ -29,6 +35,10 @@ public record WillPlanResponse(
     List<WillGiftDto> Gifts,
     List<ResiduaryShareDto> ResiduaryShares,
     WillStatus Status,
+    DateOnly? ExecutedOn,
+    string? Witness1Name,
+    string? Witness2Name,
+    string? StorageLocation,
     bool StateSupported,
     DateTimeOffset UpdatedAt)
 {
@@ -44,6 +54,10 @@ public record WillPlanResponse(
         [.. w.Gifts.Select(g => new WillGiftDto(g.Description, g.RecipientPersonId, g.RecipientName))],
         [.. w.ResiduaryShares.Select(s => new ResiduaryShareDto(s.PersonId, s.Name, s.Percent))],
         w.Status,
+        w.ExecutedOn,
+        w.Witness1Name,
+        w.Witness2Name,
+        w.StorageLocation,
         stateSupported,
         w.UpdatedAt);
 }

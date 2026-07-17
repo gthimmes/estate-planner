@@ -3,6 +3,7 @@ import type {
   Dashboard,
   Household,
   MaritalStatus,
+  MarkExecutedInput,
   Person,
   WillDocument,
   WillPlan,
@@ -69,6 +70,11 @@ export const api = {
     request<WillPlan>(`/api/households/${householdId}/will/complete`, { method: 'POST' }),
   getWillDocument: (householdId: string) =>
     request<WillDocument>(`/api/households/${householdId}/will/document`),
+  markWillExecuted: (householdId: string, input: MarkExecutedInput) =>
+    request<WillPlan>(`/api/households/${householdId}/will/execution`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
 }
 
 const HOUSEHOLD_KEY = 'estate-planner.householdId'

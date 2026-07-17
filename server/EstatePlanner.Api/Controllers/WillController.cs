@@ -85,7 +85,9 @@ public class WillController(AppDbContext db, WillService willService, TimeProvid
             })];
         will.ResiduaryShares = [.. request.ResiduaryShares
             .Select(s => new ResiduaryShare { PersonId = s.PersonId, Name = s.Name, Percent = s.Percent })];
-        will.Status = WillStatus.Draft; // any edit reopens the draft
+        // Any edit reopens the draft — a changed will is a new will and must be re-signed.
+        will.Status = WillStatus.Draft;
+        will.ClearExecution();
         will.UpdatedAt = time.GetUtcNow();
 
         await db.SaveChangesAsync();
@@ -102,7 +104,37 @@ public class WillController(AppDbContext db, WillService willService, TimeProvid
         if (errors.Count > 0)
             return Problem(detail: string.Join(" ", errors), statusCode: 400, title: "The will isn't ready yet");
 
-        will.Status = WillStatus.Complete;
+        if (will.Status != WillStatus.Executed)
+        {
+            will.Status = WillStatus.Complete;
+            will.UpdatedAt = time.GetUtcNow();
+            await db.SaveChangesAsync();
+        }
+        return WillPlanResponse.From(will, true);
+    }
+
+    [HttpPost("execution")]
+    public async Task<ActionResult<WillPlanResponse>> MarkExecuted(Guid householdId, MarkExecutedRequest request)
+    {
+        var household = await LoadHousehold(householdId);
+        if (household?.WillPlan is not WillPlan will) return NotFound();
+
+        if (will.Status == WillStatus.Draft)
+            return Problem(detail: "Finish the will before recording its signing.", statusCode: 400, title: "Not ready to sign");
+        if (request.ExecutedOn > DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime))
+            return Problem(detail: "The signing date can't be in the future.", statusCode: 400, title: "Validation failed");
+        if (string.IsNullOrWhiteSpace(request.Witness1Name) || string.IsNullOrWhiteSpace(request.Witness2Name))
+            return Problem(detail: "Record both witnesses' names.", statusCode: 400, title: "Validation failed");
+        if (string.Equals(request.Witness1Name.Trim(), request.Witness2Name.Trim(), StringComparison.OrdinalIgnoreCase))
+            return Problem(detail: "The two witnesses must be different people.", statusCode: 400, title: "Validation failed");
+        if (string.IsNullOrWhiteSpace(request.StorageLocation))
+            return Problem(detail: "Record where the signed original is stored — your executor will need to find it.", statusCode: 400, title: "Validation failed");
+
+        will.Status = WillStatus.Executed;
+        will.ExecutedOn = request.ExecutedOn;
+        will.Witness1Name = request.Witness1Name.Trim();
+        will.Witness2Name = request.Witness2Name.Trim();
+        will.StorageLocation = request.StorageLocation.Trim();
         will.UpdatedAt = time.GetUtcNow();
         await db.SaveChangesAsync();
         return WillPlanResponse.From(will, true);

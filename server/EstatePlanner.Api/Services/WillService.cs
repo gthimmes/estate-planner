@@ -185,7 +185,7 @@ public class WillService(TimeProvider time)
         return new WillDocumentResponse(
             Title: $"Last Will and Testament of {testatorName}",
             TestatorName: testatorName,
-            IsDraft: will.Status != WillStatus.Complete,
+            IsDraft: will.Status == WillStatus.Draft,
             Articles: articles,
             Execution: StateExecutionRules.For(household.StateCode),
             BeneficiaryConflictNotes: conflictNotes,

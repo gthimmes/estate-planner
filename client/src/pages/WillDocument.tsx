@@ -1,18 +1,100 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
-import type { WillDocument as WillDocumentData } from '../types'
+import type { WillDocument as WillDocumentData, WillPlan } from '../types'
+
+function SigningForm({
+  householdId,
+  onExecuted,
+}: {
+  householdId: string
+  onExecuted: (will: WillPlan) => void
+}) {
+  const [executedOn, setExecutedOn] = useState('')
+  const [witness1Name, setWitness1] = useState('')
+  const [witness2Name, setWitness2] = useState('')
+  const [storageLocation, setStorage] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setSaving(true)
+    try {
+      const will = await api.markWillExecuted(householdId, {
+        executedOn,
+        witness1Name,
+        witness2Name,
+        storageLocation,
+      })
+      onExecuted(will)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not record signing')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="inline-form" aria-label="Record your signing">
+      <label>
+        Date signed
+        <input
+          type="date"
+          value={executedOn}
+          onChange={(e) => setExecutedOn(e.target.value)}
+          required
+        />
+      </label>
+      <label>
+        Witness 1 (full name)
+        <input value={witness1Name} onChange={(e) => setWitness1(e.target.value)} required />
+      </label>
+      <label>
+        Witness 2 (full name)
+        <input value={witness2Name} onChange={(e) => setWitness2(e.target.value)} required />
+      </label>
+      <label>
+        Where is the signed original?
+        <input
+          value={storageLocation}
+          onChange={(e) => setStorage(e.target.value)}
+          placeholder="e.g. fireproof safe in the study"
+          required
+        />
+      </label>
+      <button type="submit" disabled={saving}>
+        {saving ? 'Recording…' : 'I signed it — record it'}
+      </button>
+      {error && (
+        <p role="alert" className="error">
+          {error}
+        </p>
+      )}
+    </form>
+  )
+}
 
 export function WillDocument({ householdId }: { householdId: string }) {
   const [doc, setDoc] = useState<WillDocumentData | null>(null)
+  const [will, setWill] = useState<WillPlan | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  const load = useCallback(
+    () =>
+      Promise.all([api.getWillDocument(householdId), api.getWill(householdId)])
+        .then(([d, w]) => {
+          setDoc(d)
+          setWill(w)
+        })
+        .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load')),
+    [householdId],
+  )
+
   useEffect(() => {
-    api
-      .getWillDocument(householdId)
-      .then(setDoc)
-      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load'))
-  }, [householdId])
+    void load()
+  }, [load])
 
   if (error)
     return (
@@ -20,17 +102,27 @@ export function WillDocument({ householdId }: { householdId: string }) {
         {error}
       </p>
     )
-  if (!doc) return <p className="loading">Preparing your document…</p>
+  if (!doc || !will) return <p className="loading">Preparing your document…</p>
+
+  const executed = will.status === 'Executed'
 
   return (
     <div className="will-document-page">
       <header className="page-header no-print">
         <div>
-          <h1>Your will is drafted</h1>
+          <h1>
+            {executed
+              ? 'Your will is signed'
+              : doc.isDraft
+                ? 'Your will (draft)'
+                : 'Your will is drafted'}
+          </h1>
           <p className="subtitle">
-            {doc.isDraft
-              ? 'This is a draft preview — finish the interview to complete it.'
-              : 'One thing left: it only becomes real when you sign it with witnesses.'}
+            {executed
+              ? 'Recorded and reflected in your readiness score. Nice work — most people never get this far.'
+              : doc.isDraft
+                ? 'This is a draft preview — finish the interview to complete it.'
+                : 'One thing left: it only becomes real when you sign it with witnesses.'}
           </p>
         </div>
         <div className="doc-actions">
@@ -38,6 +130,33 @@ export function WillDocument({ householdId }: { householdId: string }) {
           <Link to="/will">Edit the will</Link>
         </div>
       </header>
+
+      {executed && (
+        <aside className="banner success no-print" role="status">
+          <strong>Signed on {will.executedOn}</strong> — witnessed by {will.witness1Name} and{' '}
+          {will.witness2Name}. Original stored: {will.storageLocation}.
+          <p className="hint">
+            Editing the will revokes this record — a changed will must be signed again.
+          </p>
+        </aside>
+      )}
+
+      {!executed && !doc.isDraft && (
+        <section className="card no-print">
+          <h2>Already signed it? Make it count</h2>
+          <p>
+            Once you've signed with your witnesses, record it here. Your readiness score reflects a{' '}
+            <em>signed</em> will — an unsigned one has no legal effect.
+          </p>
+          <SigningForm
+            householdId={householdId}
+            onExecuted={(w) => {
+              setWill(w)
+              void load()
+            }}
+          />
+        </section>
+      )}
 
       {doc.beneficiaryConflictNotes.length > 0 && (
         <aside className="banner warning no-print" role="note">
@@ -50,21 +169,24 @@ export function WillDocument({ householdId }: { householdId: string }) {
         </aside>
       )}
 
-      <section className="card no-print execution">
-        <h2>
-          How to make it legal in {doc.execution.stateCode} ({doc.execution.witnessCount} witnesses)
-        </h2>
-        <ol>
-          {doc.execution.steps.map((step, i) => (
-            <li key={i}>{step}</li>
-          ))}
-        </ol>
-        <ul className="warnings">
-          {doc.execution.warnings.map((warning, i) => (
-            <li key={i}>{warning}</li>
-          ))}
-        </ul>
-      </section>
+      {!executed && (
+        <section className="card no-print execution">
+          <h2>
+            How to make it legal in {doc.execution.stateCode} ({doc.execution.witnessCount}{' '}
+            witnesses)
+          </h2>
+          <ol>
+            {doc.execution.steps.map((step, i) => (
+              <li key={i}>{step}</li>
+            ))}
+          </ol>
+          <ul className="warnings">
+            {doc.execution.warnings.map((warning, i) => (
+              <li key={i}>{warning}</li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <article className="card legal-document">
         {doc.isDraft && <p className="watermark">DRAFT</p>}

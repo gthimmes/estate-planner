@@ -8,29 +8,29 @@ Quality gate: every feature ships with xUnit integration tests (real Postgres vi
 - [x] Test framework: xUnit + Testcontainers, Vitest + RTL, Playwright with auto-boot `webServer`
 - [x] Deep research → `docs/RESEARCH.md`, `docs/FEATURES.md`
 
-## Phase 1 — Know your estate (data foundation)
+## Phase 1 — Know your estate (data foundation) ✅
 *The user can describe their world and see where they stand. No legal documents yet — pure data, zero UPL exposure.*
-- [ ] Household setup: state of residence, marital status
-- [ ] People: spouse/partner, children (minor detection for guardianship), other loved ones
-- [ ] Asset & liability inventory: categories (real estate, bank, retirement, life insurance, digital, personal property, debts), estimated values, ownership
-- [ ] Beneficiary designation tracking per asset (has one / who / needs review)
-- [ ] Estate readiness dashboard: net-estate summary, readiness checklist + score, next-best-action
-- [ ] E2E: onboard → add family → add assets → dashboard reflects reality
+- [x] Household setup: state of residence, marital status
+- [x] People: spouse/partner, children (minor detection for guardianship), other loved ones
+- [x] Asset & liability inventory: categories (real estate, bank, retirement, life insurance, digital, personal property, debts), estimated values, ownership
+- [x] Beneficiary designation tracking per asset (has one / who / needs review)
+- [x] Estate readiness dashboard: net-estate summary, readiness checklist + score, next-best-action
+- [x] E2E: onboard → add family → add assets → dashboard reflects reality
 
-## Phase 2 — The will
-- [ ] Guided will interview (plain-language, resumable, progress-saving)
-- [ ] Executor selection with bond-waiver + powers boilerplate; backup executor
-- [ ] Guardianship nominations for minor children (+ backups)
-- [ ] Specific gifts + residuary estate distribution
-- [ ] State-aware document assembly → printable PDF with UPL disclosures
-- [ ] Will/beneficiary-designation conflict warnings
-- [ ] E2E: complete interview → generated document contains the right provisions
+## Phase 2 — The will ✅
+- [x] Guided will interview (plain-language, resumable, progress-saving)
+- [x] Executor selection with bond-waiver + powers boilerplate; backup executor
+- [x] Guardianship nominations for minor children (+ backups)
+- [x] Specific gifts + residuary estate distribution
+- [x] State-aware document assembly → printable document with UPL disclosures (print-to-PDF)
+- [x] Will/beneficiary-designation conflict warnings
+- [x] E2E: complete interview → generated document contains the right provisions
 
-## Phase 3 — Done means signed (execution)
-- [ ] Per-state execution rules engine (witness count, disinterested-witness rules, notary options)
-- [ ] Signing-day walkthrough + printable checklist
-- [ ] "Mark as executed" flow (date, witnesses, storage location) → readiness score reflects *executed*, not drafted
-- [ ] E2E: draft → execution walkthrough → executed state on dashboard
+## Phase 3 — Done means signed (execution) ✅
+- [x] Per-state execution rules engine (witness count, disinterested-witness rules, notary notes for CA/IL/PA/VT)
+- [x] Signing-day walkthrough on the document page
+- [x] "Mark as executed" flow (date, witnesses, storage location) → readiness score reflects *executed*, not drafted; edits revoke the signing record
+- [x] E2E: draft → execution walkthrough → executed state on dashboard → edit revokes
 
 ## Phase 4 — While you're alive (POA & healthcare)
 - [ ] Financial power of attorney interview + state forms

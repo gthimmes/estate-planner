@@ -373,6 +373,11 @@ tr.debt-row td {
   border: 1px solid var(--warning-border);
 }
 
+.banner.success {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+}
+
 /* ---------- will wizard ---------- */
 
 .wizard .card {

@@ -81,12 +81,13 @@ test.describe('Phase 2: the will', () => {
     await expect(page.getByText(/notarization does NOT replace witnesses/i)).toBeVisible()
     await expect(page.getByRole('button', { name: /print/i })).toBeVisible()
 
-    // --- Dashboard reflects the finished will ---
+    // --- Dashboard reflects the drafted (but unsigned) will ---
     await page.getByRole('navigation').getByRole('link', { name: 'Dashboard' }).click()
-    await expect(page.getByText(/drafted and ready to sign/i)).toBeVisible()
-    // household + family + will done, assets/beneficiaries/poa/healthcare pending = 3/7 → 43%
+    await expect(page.getByText(/a changed will must be signed again/i)).toBeVisible()
+    await expect(page.getByText(/print it and sign with witnesses/i)).toBeVisible()
+    // household + family + will drafted = 3/8 → 38%; signing still pending
     await expect(page.getByRole('img', { name: /estate readiness/i })).toHaveAccessibleName(
-      /43 percent/,
+      /38 percent/,
     )
   })
 

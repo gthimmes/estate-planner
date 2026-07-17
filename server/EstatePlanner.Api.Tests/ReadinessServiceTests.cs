@@ -22,9 +22,9 @@ public class ReadinessServiceTests
     {
         var dashboard = _service.BuildDashboard(EmptyHousehold());
 
-        Assert.Equal(7, dashboard.Checklist.Count);
+        Assert.Equal(8, dashboard.Checklist.Count);
         Assert.Single(dashboard.Checklist, i => i.Done);
-        Assert.Equal(14, dashboard.ReadinessScore);
+        Assert.Equal(13, dashboard.ReadinessScore);
     }
 
     [Fact]
@@ -84,6 +84,26 @@ public class ReadinessServiceTests
         household.Assets[0].BeneficiaryStatus = BeneficiaryStatus.Designated;
         item = _service.BuildDashboard(household).Checklist.Single(i => i.Key == "beneficiaries");
         Assert.True(item.Done);
+    }
+
+    [Fact]
+    public void Will_item_counts_when_complete_but_sign_item_waits_for_execution()
+    {
+        var household = EmptyHousehold();
+        household.WillPlan = new WillPlan { Status = WillStatus.Complete };
+
+        var dashboard = _service.BuildDashboard(household);
+        Assert.True(dashboard.Checklist.Single(i => i.Key == "will").Done);
+        Assert.False(dashboard.Checklist.Single(i => i.Key == "sign").Done);
+
+        household.WillPlan.Status = WillStatus.Executed;
+        household.WillPlan.ExecutedOn = new DateOnly(2026, 7, 1);
+        household.WillPlan.StorageLocation = "fireproof safe in the study";
+
+        dashboard = _service.BuildDashboard(household);
+        var sign = dashboard.Checklist.Single(i => i.Key == "sign");
+        Assert.True(sign.Done);
+        Assert.Contains("fireproof safe", sign.Detail);
     }
 
     [Fact]

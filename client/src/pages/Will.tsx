@@ -48,6 +48,7 @@ export function Will({ householdId }: { householdId: string }) {
   const [people, setPeople] = useState<Person[]>([])
   const [form, setForm] = useState<WillPlanInput | null>(null)
   const [stateSupported, setStateSupported] = useState(true)
+  const [wasExecuted, setWasExecuted] = useState(false)
   const [step, setStep] = useState<StepId>('about')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -57,6 +58,7 @@ export function Will({ householdId }: { householdId: string }) {
       .then(([will, ppl]) => {
         setPeople(ppl)
         setStateSupported(will.stateSupported)
+        setWasExecuted(will.status === 'Executed')
         // prev ?? …: a late duplicate response (React StrictMode double-mount)
         // must never clobber selections the user has already made
         setForm(
@@ -181,6 +183,13 @@ export function Will({ householdId }: { householdId: string }) {
           ))}
         </ol>
       </header>
+
+      {wasExecuted && (
+        <aside className="banner warning" role="note">
+          <strong>This will has been signed.</strong> Saving any change revokes the signing record —
+          the updated will must be printed and signed with witnesses again.
+        </aside>
+      )}
 
       {step === 'about' && (
         <section className="card">

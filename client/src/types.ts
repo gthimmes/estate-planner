@@ -62,7 +62,7 @@ export interface Dashboard {
   checklist: ReadinessItem[]
 }
 
-export type WillStatus = 'Draft' | 'Complete'
+export type WillStatus = 'Draft' | 'Complete' | 'Executed'
 
 export type ResiduaryStrategy = 'SpouseThenChildren' | 'ChildrenEqually' | 'Custom'
 
@@ -90,11 +90,25 @@ export interface WillPlan {
   gifts: WillGift[]
   residuaryShares: ResiduaryShare[]
   status: WillStatus
+  executedOn: string | null
+  witness1Name: string | null
+  witness2Name: string | null
+  storageLocation: string | null
   stateSupported: boolean
   updatedAt: string
 }
 
-export type WillPlanInput = Omit<WillPlan, 'id' | 'status' | 'stateSupported' | 'updatedAt'>
+export type WillPlanInput = Omit<
+  WillPlan,
+  'id' | 'status' | 'executedOn' | 'witness1Name' | 'witness2Name' | 'storageLocation' | 'stateSupported' | 'updatedAt'
+>
+
+export interface MarkExecutedInput {
+  executedOn: string
+  witness1Name: string
+  witness2Name: string
+  storageLocation: string
+}
 
 export interface DocumentArticle {
   heading: string

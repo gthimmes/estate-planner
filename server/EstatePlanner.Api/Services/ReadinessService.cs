@@ -48,14 +48,24 @@ public class ReadinessService(TimeProvider time)
                         ? "All accounts that can carry a beneficiary are handled."
                         : $"{designatable.Count(a => a.BeneficiaryStatus is BeneficiaryStatus.None or BeneficiaryStatus.NeedsReview)} of {designatable.Count} accounts need attention. Designations override your will."),
             new("will", "Create your will",
-                household.WillPlan?.Status == WillStatus.Complete,
-                household.WillPlan?.Status == WillStatus.Complete
-                    ? "Drafted and ready to sign. Signing with witnesses comes next."
-                    : household.WillPlan is not null
-                        ? "You've started — pick up where you left off."
-                        : hasMinorChildren
-                            ? "A guided, plain-language interview. You have minor children, so your will should also name a guardian."
-                            : "A guided, plain-language interview."),
+                household.WillPlan?.Status is WillStatus.Complete or WillStatus.Executed,
+                household.WillPlan?.Status switch
+                {
+                    WillStatus.Complete or WillStatus.Executed => "Drafted. A changed will must be signed again.",
+                    WillStatus.Draft => "You've started — pick up where you left off.",
+                    _ => hasMinorChildren
+                        ? "A guided, plain-language interview. You have minor children, so your will should also name a guardian."
+                        : "A guided, plain-language interview.",
+                }),
+            new("sign", "Sign your will to make it official",
+                household.WillPlan?.Status == WillStatus.Executed,
+                household.WillPlan?.Status switch
+                {
+                    WillStatus.Executed =>
+                        $"Signed on {household.WillPlan.ExecutedOn:MMMM d, yyyy}. Original stored: {household.WillPlan.StorageLocation}.",
+                    WillStatus.Complete => "Print it and sign with witnesses — we'll walk you through your state's rules.",
+                    _ => "An unsigned will has no legal effect. Finish drafting first.",
+                }),
             new("poa", "Financial power of attorney",
                 false,
                 "Coming soon. Names someone to handle finances if you can't."),
@@ -64,7 +74,7 @@ public class ReadinessService(TimeProvider time)
                 "Coming soon. Your medical wishes, and who speaks for you."),
         };
 
-        var score = (int)Math.Round(100.0 * checklist.Count(i => i.Done) / checklist.Count);
+        var score = (int)Math.Round(100.0 * checklist.Count(i => i.Done) / checklist.Count, MidpointRounding.AwayFromZero);
 
         return new DashboardResponse(
             TotalAssets: totalAssets,
