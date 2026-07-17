@@ -1,0 +1,6 @@
+@EstatePlanner.Api_HostAddress = http://localhost:5222
+
+GET {{EstatePlanner.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

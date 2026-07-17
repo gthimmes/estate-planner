@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/server/">
+    <Project Path="server/EstatePlanner.Api.Tests/EstatePlanner.Api.Tests.csproj" />
+    <Project Path="server/EstatePlanner.Api/EstatePlanner.Api.csproj" />
+  </Folder>
+</Solution>
