@@ -32,12 +32,12 @@ Quality gate: every feature ships with xUnit integration tests (real Postgres vi
 - [x] "Mark as executed" flow (date, witnesses, storage location) → readiness score reflects *executed*, not drafted; edits revoke the signing record
 - [x] E2E: draft → execution walkthrough → executed state on dashboard → edit revokes
 
-## Phase 4 — While you're alive (POA & healthcare)
-- [ ] Financial power of attorney interview + state forms
-- [ ] Advance healthcare directive / living will interview
-- [ ] HIPAA authorization
-- [ ] Agent selection UX shared across documents
-- [ ] E2E per document type
+## Phase 4 — While you're alive (POA & healthcare) ✅
+- [x] Financial power of attorney interview (immediate vs springing, notary execution guidance)
+- [x] Advance healthcare directive / living will interview (life-support preference, organ donation)
+- [x] HIPAA authorization (bundled into the healthcare directive)
+- [x] Agent selection UX shared across documents; sign-and-record flow matches the will's
+- [x] E2E per document type
 
 ## Phase 5 — The complete plan
 - [ ] Revocable living trust interview + funding checklist (retitle assets tracked in inventory)

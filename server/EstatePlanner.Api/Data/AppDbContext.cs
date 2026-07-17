@@ -9,6 +9,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Person> People => Set<Person>();
     public DbSet<Asset> Assets => Set<Asset>();
     public DbSet<WillPlan> WillPlans => Set<WillPlan>();
+    public DbSet<EstateDocument> EstateDocuments => Set<EstateDocument>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -36,6 +37,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(w => w.ResiduaryStrategy).HasConversion<string>().HasMaxLength(30);
             e.OwnsMany(w => w.Gifts, b => b.ToJson());
             e.OwnsMany(w => w.ResiduaryShares, b => b.ToJson());
+        });
+
+        modelBuilder.Entity<EstateDocument>(e =>
+        {
+            e.HasOne(d => d.Household).WithMany(h => h.Documents).HasForeignKey(d => d.HouseholdId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(d => new { d.HouseholdId, d.Type }).IsUnique();
+            e.Property(d => d.Type).HasConversion<string>().HasMaxLength(30);
+            e.Property(d => d.Status).HasConversion<string>().HasMaxLength(20);
+            e.Property(d => d.LifeSupport).HasConversion<string>().HasMaxLength(20);
+            e.Property(d => d.ExecutionNotes).HasMaxLength(500);
         });
 
         modelBuilder.Entity<Asset>(e =>

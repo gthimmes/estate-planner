@@ -66,12 +66,12 @@ public class ReadinessService(TimeProvider time)
                     WillStatus.Complete => "Print it and sign with witnesses — we'll walk you through your state's rules.",
                     _ => "An unsigned will has no legal effect. Finish drafting first.",
                 }),
-            new("poa", "Financial power of attorney",
-                false,
-                "Coming soon. Names someone to handle finances if you can't."),
-            new("healthcare", "Advance healthcare directive",
-                false,
-                "Coming soon. Your medical wishes, and who speaks for you."),
+            DocumentItem(household, EstateDocumentType.FinancialPoa,
+                "poa", "Financial power of attorney",
+                "Names someone to handle finances if you can't."),
+            DocumentItem(household, EstateDocumentType.HealthcareDirective,
+                "healthcare", "Advance healthcare directive",
+                "Your medical wishes, and who speaks for you."),
         };
 
         var score = (int)Math.Round(100.0 * checklist.Count(i => i.Done) / checklist.Count, MidpointRounding.AwayFromZero);
@@ -86,4 +86,20 @@ public class ReadinessService(TimeProvider time)
             ReadinessScore: score,
             Checklist: checklist);
     }
+
+    private static ReadinessItem DocumentItem(
+        Household household, EstateDocumentType type, string key, string label, string pitch)
+    {
+        var doc = household.Documents.FirstOrDefault(d => d.Type == type);
+        return new ReadinessItem(key, label,
+            doc?.Status == DocumentStatus.Executed,
+            doc?.Status switch
+            {
+                DocumentStatus.Executed => $"Signed on {doc.ExecutedOn:MMMM d, yyyy}.",
+                DocumentStatus.Complete => "Drafted — print and sign it to make it count.",
+                DocumentStatus.Draft => "You've started — pick up where you left off.",
+                _ => pitch,
+            });
+    }
+
 }

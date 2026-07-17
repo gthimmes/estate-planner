@@ -1,6 +1,9 @@
 import type {
   Asset,
   Dashboard,
+  EstateDocument,
+  EstateDocumentInput,
+  EstateDocumentType,
   Household,
   MaritalStatus,
   MarkExecutedInput,
@@ -75,6 +78,27 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(input),
     }),
+
+  getEstateDocument: (householdId: string, type: EstateDocumentType) =>
+    request<EstateDocument>(`/api/households/${householdId}/documents/${type}`),
+  saveEstateDocument: (householdId: string, type: EstateDocumentType, input: EstateDocumentInput) =>
+    request<EstateDocument>(`/api/households/${householdId}/documents/${type}`, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
+  completeEstateDocument: (householdId: string, type: EstateDocumentType) =>
+    request<EstateDocument>(`/api/households/${householdId}/documents/${type}/complete`, { method: 'POST' }),
+  markEstateDocumentExecuted: (
+    householdId: string,
+    type: EstateDocumentType,
+    input: { executedOn: string; executionNotes: string | null },
+  ) =>
+    request<EstateDocument>(`/api/households/${householdId}/documents/${type}/execution`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  getEstateDocumentRender: (householdId: string, type: EstateDocumentType) =>
+    request<WillDocument>(`/api/households/${householdId}/documents/${type}/document`),
 }
 
 const HOUSEHOLD_KEY = 'estate-planner.householdId'

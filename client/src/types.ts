@@ -130,6 +130,33 @@ export interface WillDocument {
   disclosure: string
 }
 
+export type EstateDocumentType = 'FinancialPoa' | 'HealthcareDirective'
+
+export type DocumentStatus = 'Draft' | 'Complete' | 'Executed'
+
+export type LifeSupportPreference = 'NotChosen' | 'ProlongLife' | 'DoNotProlong' | 'AgentDecides'
+
+export interface EstateDocument {
+  id: string
+  type: EstateDocumentType
+  principalPersonId: string | null
+  agentPersonId: string | null
+  backupAgentPersonId: string | null
+  effectiveImmediately: boolean
+  lifeSupport: LifeSupportPreference
+  includeHipaa: boolean
+  organDonation: boolean
+  status: DocumentStatus
+  executedOn: string | null
+  executionNotes: string | null
+  updatedAt: string
+}
+
+export type EstateDocumentInput = Omit<
+  EstateDocument,
+  'id' | 'type' | 'status' | 'executedOn' | 'executionNotes' | 'updatedAt'
+>
+
 export function isMinor(person: Person, today = new Date()): boolean {
   if (person.role !== 'Child') return false
   if (!person.dateOfBirth) return true

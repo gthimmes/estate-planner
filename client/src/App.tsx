@@ -6,6 +6,7 @@ import { Family } from './pages/Family'
 import { Welcome } from './pages/Welcome'
 import { Will } from './pages/Will'
 import { WillDocument } from './pages/WillDocument'
+import { EstateDocumentPage } from './pages/EstateDocumentPage'
 
 function App() {
   const location = useLocation()
@@ -33,6 +34,8 @@ function App() {
         <NavLink to="/family">Family</NavLink>
         <NavLink to="/assets">Assets &amp; debts</NavLink>
         <NavLink to="/will">Your will</NavLink>
+        <NavLink to="/poa">Power of attorney</NavLink>
+        <NavLink to="/healthcare">Healthcare wishes</NavLink>
         <p className="disclosure">
           Self-help forms and information — not legal advice, and not a substitute for an attorney.
         </p>
@@ -44,6 +47,16 @@ function App() {
           <Route path="/assets" element={<Assets householdId={householdId!} />} />
           <Route path="/will" element={<Will householdId={householdId!} />} />
           <Route path="/will/document" element={<WillDocument householdId={householdId!} />} />
+          <Route
+            path="/poa"
+            element={<EstateDocumentPage key="poa" householdId={householdId!} type="FinancialPoa" />}
+          />
+          <Route
+            path="/healthcare"
+            element={
+              <EstateDocumentPage key="healthcare" householdId={householdId!} type="HealthcareDirective" />
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

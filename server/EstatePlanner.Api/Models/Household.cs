@@ -21,4 +21,5 @@ public class Household
     public List<Person> People { get; set; } = [];
     public List<Asset> Assets { get; set; } = [];
     public WillPlan? WillPlan { get; set; }
+    public List<EstateDocument> Documents { get; set; } = [];
 }

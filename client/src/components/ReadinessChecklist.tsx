@@ -7,6 +7,8 @@ const ITEM_ROUTES: Record<string, string> = {
   beneficiaries: '/assets',
   will: '/will',
   sign: '/will/document',
+  poa: '/poa',
+  healthcare: '/healthcare',
 }
 
 export function ReadinessChecklist({ items }: { items: ReadinessItem[] }) {

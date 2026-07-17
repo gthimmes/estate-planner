@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api'
+import { PersonSelect } from '../components/PersonSelect'
 import { isMinor, type Person, type ResiduaryShare, type WillGift, type WillPlanInput } from '../types'
 
 type StepId = 'about' | 'executor' | 'guardian' | 'gifts' | 'estate' | 'review'
@@ -12,35 +13,6 @@ const STEP_TITLES: Record<StepId, string> = {
   gifts: 'Specific gifts',
   estate: 'The rest of your estate',
   review: 'Review & finish',
-}
-
-function PersonSelect({
-  people,
-  value,
-  onChange,
-  exclude = [],
-  allowNone = true,
-  noneLabel = 'Not chosen yet',
-}: {
-  people: Person[]
-  value: string | null
-  onChange: (id: string | null) => void
-  exclude?: (string | null)[]
-  allowNone?: boolean
-  noneLabel?: string
-}) {
-  return (
-    <select value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}>
-      {allowNone && <option value="">{noneLabel}</option>}
-      {people
-        .filter((p) => !exclude.includes(p.id))
-        .map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.firstName} {p.lastName}
-          </option>
-        ))}
-    </select>
-  )
 }
 
 export function Will({ householdId }: { householdId: string }) {
