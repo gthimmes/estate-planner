@@ -16,6 +16,7 @@ public class DashboardController(AppDbContext db, ReadinessService readiness) : 
         var household = await db.Households
             .Include(h => h.People)
             .Include(h => h.Assets)
+            .Include(h => h.WillPlan)
             .AsSplitQuery()
             .FirstOrDefaultAsync(h => h.Id == householdId);
         return household is null ? NotFound() : readiness.BuildDashboard(household);

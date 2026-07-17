@@ -1,4 +1,13 @@
-import type { Asset, Dashboard, Household, MaritalStatus, Person } from './types'
+import type {
+  Asset,
+  Dashboard,
+  Household,
+  MaritalStatus,
+  Person,
+  WillDocument,
+  WillPlan,
+  WillPlanInput,
+} from './types'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
@@ -52,6 +61,14 @@ export const api = {
     request<void>(`/api/households/${householdId}/assets/${assetId}`, { method: 'DELETE' }),
 
   getDashboard: (householdId: string) => request<Dashboard>(`/api/households/${householdId}/dashboard`),
+
+  getWill: (householdId: string) => request<WillPlan>(`/api/households/${householdId}/will`),
+  saveWill: (householdId: string, input: WillPlanInput) =>
+    request<WillPlan>(`/api/households/${householdId}/will`, { method: 'PUT', body: JSON.stringify(input) }),
+  completeWill: (householdId: string) =>
+    request<WillPlan>(`/api/households/${householdId}/will/complete`, { method: 'POST' }),
+  getWillDocument: (householdId: string) =>
+    request<WillDocument>(`/api/households/${householdId}/will/document`),
 }
 
 const HOUSEHOLD_KEY = 'estate-planner.householdId'

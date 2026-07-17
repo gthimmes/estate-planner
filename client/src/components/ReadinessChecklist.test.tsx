@@ -1,7 +1,10 @@
-import { render, screen } from '@testing-library/react'
+import { render as rtlRender, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import type { ReadinessItem } from '../types'
 import { ReadinessChecklist } from './ReadinessChecklist'
+
+const render = (ui: React.ReactElement) => rtlRender(<MemoryRouter>{ui}</MemoryRouter>)
 
 const items: ReadinessItem[] = [
   { key: 'family', label: 'Add your loved ones', done: true, detail: '2 people in your plan.' },

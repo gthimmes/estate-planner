@@ -1,0 +1,128 @@
+using EstatePlanner.Api.Contracts;
+using EstatePlanner.Api.Data;
+using EstatePlanner.Api.Models;
+using EstatePlanner.Api.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace EstatePlanner.Api.Controllers;
+
+[ApiController]
+[Route("api/households/{householdId:guid}/will")]
+public class WillController(AppDbContext db, WillService willService, TimeProvider time) : ControllerBase
+{
+    [HttpGet]
+    public async Task<ActionResult<WillPlanResponse>> Get(Guid householdId)
+    {
+        var household = await LoadHousehold(householdId);
+        if (household is null) return NotFound();
+
+        var will = household.WillPlan;
+        if (will is null)
+        {
+            will = new WillPlan
+            {
+                Id = Guid.NewGuid(),
+                HouseholdId = householdId,
+                UpdatedAt = time.GetUtcNow(),
+            };
+            db.WillPlans.Add(will);
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Concurrent first-access already created the draft; return that one.
+                db.Entry(will).State = EntityState.Detached;
+                will = await db.WillPlans.AsNoTracking().FirstAsync(w => w.HouseholdId == householdId);
+            }
+        }
+        return WillPlanResponse.From(will, StateExecutionRules.IsSupported(household.StateCode));
+    }
+
+    [HttpPut]
+    public async Task<ActionResult<WillPlanResponse>> Save(Guid householdId, SaveWillRequest request)
+    {
+        var household = await LoadHousehold(householdId);
+        if (household is null) return NotFound();
+
+        var will = household.WillPlan;
+        if (will is null)
+        {
+            will = new WillPlan { Id = Guid.NewGuid(), HouseholdId = householdId };
+            db.WillPlans.Add(will);
+        }
+
+        var peopleIds = household.People.Select(p => p.Id).ToHashSet();
+        foreach (var (id, label) in new (Guid?, string)[]
+        {
+            (request.TestatorPersonId, "testator"),
+            (request.ExecutorPersonId, "executor"),
+            (request.BackupExecutorPersonId, "backup executor"),
+            (request.GuardianPersonId, "guardian"),
+            (request.BackupGuardianPersonId, "backup guardian"),
+        })
+        {
+            if (id is Guid personId && !peopleIds.Contains(personId))
+                return Problem(detail: $"The {label} must be a person in this household.", statusCode: 400, title: "Validation failed");
+        }
+
+        will.TestatorPersonId = request.TestatorPersonId;
+        will.ExecutorPersonId = request.ExecutorPersonId;
+        will.BackupExecutorPersonId = request.BackupExecutorPersonId;
+        will.WaiveExecutorBond = request.WaiveExecutorBond;
+        will.GuardianPersonId = request.GuardianPersonId;
+        will.BackupGuardianPersonId = request.BackupGuardianPersonId;
+        will.ResiduaryStrategy = request.ResiduaryStrategy;
+        will.Gifts = [.. request.Gifts
+            .Where(g => !string.IsNullOrWhiteSpace(g.Description))
+            .Select(g => new WillGift
+            {
+                Description = g.Description.Trim(),
+                RecipientPersonId = g.RecipientPersonId,
+                RecipientName = g.RecipientName,
+            })];
+        will.ResiduaryShares = [.. request.ResiduaryShares
+            .Select(s => new ResiduaryShare { PersonId = s.PersonId, Name = s.Name, Percent = s.Percent })];
+        will.Status = WillStatus.Draft; // any edit reopens the draft
+        will.UpdatedAt = time.GetUtcNow();
+
+        await db.SaveChangesAsync();
+        return WillPlanResponse.From(will, StateExecutionRules.IsSupported(household.StateCode));
+    }
+
+    [HttpPost("complete")]
+    public async Task<ActionResult<WillPlanResponse>> Complete(Guid householdId)
+    {
+        var household = await LoadHousehold(householdId);
+        if (household?.WillPlan is not WillPlan will) return NotFound();
+
+        var errors = willService.ValidateForCompletion(household, will);
+        if (errors.Count > 0)
+            return Problem(detail: string.Join(" ", errors), statusCode: 400, title: "The will isn't ready yet");
+
+        will.Status = WillStatus.Complete;
+        will.UpdatedAt = time.GetUtcNow();
+        await db.SaveChangesAsync();
+        return WillPlanResponse.From(will, true);
+    }
+
+    [HttpGet("document")]
+    public async Task<ActionResult<WillDocumentResponse>> Document(Guid householdId)
+    {
+        var household = await LoadHousehold(householdId);
+        if (household?.WillPlan is not WillPlan will) return NotFound();
+        if (!StateExecutionRules.IsSupported(household.StateCode))
+            return Problem(detail: "Louisiana wills are not supported.", statusCode: 400, title: "Unsupported state");
+        return willService.BuildDocument(household, will);
+    }
+
+    private Task<Household?> LoadHousehold(Guid householdId) =>
+        db.Households
+            .Include(h => h.People)
+            .Include(h => h.Assets)
+            .Include(h => h.WillPlan)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(h => h.Id == householdId);
+}

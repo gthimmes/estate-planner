@@ -48,10 +48,14 @@ public class ReadinessService(TimeProvider time)
                         ? "All accounts that can carry a beneficiary are handled."
                         : $"{designatable.Count(a => a.BeneficiaryStatus is BeneficiaryStatus.None or BeneficiaryStatus.NeedsReview)} of {designatable.Count} accounts need attention. Designations override your will."),
             new("will", "Create your will",
-                false,
-                hasMinorChildren
-                    ? "Coming soon. You have minor children, so your will should also name a guardian."
-                    : "Coming soon — a guided, plain-language interview."),
+                household.WillPlan?.Status == WillStatus.Complete,
+                household.WillPlan?.Status == WillStatus.Complete
+                    ? "Drafted and ready to sign. Signing with witnesses comes next."
+                    : household.WillPlan is not null
+                        ? "You've started — pick up where you left off."
+                        : hasMinorChildren
+                            ? "A guided, plain-language interview. You have minor children, so your will should also name a guardian."
+                            : "A guided, plain-language interview."),
             new("poa", "Financial power of attorney",
                 false,
                 "Coming soon. Names someone to handle finances if you can't."),

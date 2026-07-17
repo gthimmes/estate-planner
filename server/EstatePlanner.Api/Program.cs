@@ -13,6 +13,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<ReadinessService>();
+builder.Services.AddSingleton<WillService>();
 
 builder.Services.AddCors(options =>
 {

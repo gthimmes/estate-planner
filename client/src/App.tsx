@@ -4,6 +4,8 @@ import { Assets } from './pages/Assets'
 import { Dashboard } from './pages/Dashboard'
 import { Family } from './pages/Family'
 import { Welcome } from './pages/Welcome'
+import { Will } from './pages/Will'
+import { WillDocument } from './pages/WillDocument'
 
 function App() {
   const location = useLocation()
@@ -30,6 +32,7 @@ function App() {
         </NavLink>
         <NavLink to="/family">Family</NavLink>
         <NavLink to="/assets">Assets &amp; debts</NavLink>
+        <NavLink to="/will">Your will</NavLink>
         <p className="disclosure">
           Self-help forms and information — not legal advice, and not a substitute for an attorney.
         </p>
@@ -39,6 +42,8 @@ function App() {
           <Route path="/" element={<Dashboard householdId={householdId!} />} />
           <Route path="/family" element={<Family householdId={householdId!} />} />
           <Route path="/assets" element={<Assets householdId={householdId!} />} />
+          <Route path="/will" element={<Will householdId={householdId!} />} />
+          <Route path="/will/document" element={<WillDocument householdId={householdId!} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

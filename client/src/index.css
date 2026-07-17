@@ -373,6 +373,177 @@ tr.debt-row td {
   border: 1px solid var(--warning-border);
 }
 
+/* ---------- will wizard ---------- */
+
+.wizard .card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.step-dots {
+  list-style: none;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0;
+  margin: 0.75rem 0 0;
+}
+
+.step-dots li {
+  width: 2.2rem;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.step-dots li.active {
+  background: var(--accent);
+}
+
+.wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+button.secondary {
+  background: var(--surface);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  align-self: flex-start;
+}
+
+label.checkbox,
+label.radio {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 500;
+}
+
+label.checkbox input,
+label.radio input {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--accent);
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.gift-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr auto;
+  gap: 0.75rem;
+  align-items: end;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.review-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.review-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ---------- legal document ---------- */
+
+.doc-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+
+.legal-document {
+  position: relative;
+  font-family: Georgia, 'Times New Roman', serif;
+  line-height: 1.7;
+  padding: 3rem;
+}
+
+.legal-document .doc-title {
+  text-align: center;
+  font-size: 1.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 2rem;
+}
+
+.legal-document h3 {
+  text-transform: uppercase;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  margin-top: 1.75rem;
+}
+
+.legal-document .watermark {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 7rem;
+  font-weight: 700;
+  color: rgba(179, 56, 46, 0.08);
+  transform: rotate(-25deg);
+  pointer-events: none;
+  margin: 0;
+}
+
+.doc-disclosure {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--text-soft);
+  font-family: var(--sans);
+}
+
+.execution ol li,
+.execution .warnings li {
+  margin-bottom: 0.4rem;
+}
+
+.execution .warnings {
+  color: #8a5c14;
+  font-size: 0.88rem;
+}
+
+@media print {
+  .no-print,
+  .sidebar {
+    display: none !important;
+  }
+
+  .shell {
+    display: block;
+  }
+
+  .content {
+    padding: 0;
+    max-width: none;
+  }
+
+  .legal-document {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  :root {
+    background: #fff;
+  }
+}
+
 /* ---------- welcome ---------- */
 
 .welcome {

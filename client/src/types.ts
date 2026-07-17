@@ -62,6 +62,71 @@ export interface Dashboard {
   checklist: ReadinessItem[]
 }
 
+export type WillStatus = 'Draft' | 'Complete'
+
+export type ResiduaryStrategy = 'SpouseThenChildren' | 'ChildrenEqually' | 'Custom'
+
+export interface WillGift {
+  description: string
+  recipientPersonId: string | null
+  recipientName: string | null
+}
+
+export interface ResiduaryShare {
+  personId: string | null
+  name: string | null
+  percent: number
+}
+
+export interface WillPlan {
+  id: string
+  testatorPersonId: string | null
+  executorPersonId: string | null
+  backupExecutorPersonId: string | null
+  waiveExecutorBond: boolean
+  guardianPersonId: string | null
+  backupGuardianPersonId: string | null
+  residuaryStrategy: ResiduaryStrategy
+  gifts: WillGift[]
+  residuaryShares: ResiduaryShare[]
+  status: WillStatus
+  stateSupported: boolean
+  updatedAt: string
+}
+
+export type WillPlanInput = Omit<WillPlan, 'id' | 'status' | 'stateSupported' | 'updatedAt'>
+
+export interface DocumentArticle {
+  heading: string
+  paragraphs: string[]
+}
+
+export interface WillDocument {
+  title: string
+  testatorName: string
+  isDraft: boolean
+  articles: DocumentArticle[]
+  execution: {
+    stateCode: string
+    witnessCount: number
+    steps: string[]
+    warnings: string[]
+  }
+  beneficiaryConflictNotes: string[]
+  disclosure: string
+}
+
+export function isMinor(person: Person, today = new Date()): boolean {
+  if (person.role !== 'Child') return false
+  if (!person.dateOfBirth) return true
+  const dob = new Date(person.dateOfBirth)
+  const age =
+    today.getFullYear() -
+    dob.getFullYear() -
+    (today < new Date(today.getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0)
+  return age < 18
+}
+
 export const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
   RealEstate: 'Real estate',
   BankAccount: 'Bank account',
