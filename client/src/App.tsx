@@ -7,6 +7,8 @@ import { Welcome } from './pages/Welcome'
 import { Will } from './pages/Will'
 import { WillDocument } from './pages/WillDocument'
 import { EstateDocumentPage } from './pages/EstateDocumentPage'
+import { Trust } from './pages/Trust'
+import { Vault } from './pages/Vault'
 
 function App() {
   const location = useLocation()
@@ -36,6 +38,8 @@ function App() {
         <NavLink to="/will">Your will</NavLink>
         <NavLink to="/poa">Power of attorney</NavLink>
         <NavLink to="/healthcare">Healthcare wishes</NavLink>
+        <NavLink to="/trust">Living trust</NavLink>
+        <NavLink to="/vault">Vault</NavLink>
         <p className="disclosure">
           Self-help forms and information — not legal advice, and not a substitute for an attorney.
         </p>
@@ -57,6 +61,8 @@ function App() {
               <EstateDocumentPage key="healthcare" householdId={householdId!} type="HealthcareDirective" />
             }
           />
+          <Route path="/trust" element={<Trust householdId={householdId!} />} />
+          <Route path="/vault" element={<Vault householdId={householdId!} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

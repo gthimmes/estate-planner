@@ -22,4 +22,6 @@ public class Household
     public List<Asset> Assets { get; set; } = [];
     public WillPlan? WillPlan { get; set; }
     public List<EstateDocument> Documents { get; set; } = [];
+    public TrustPlan? TrustPlan { get; set; }
+    public List<VaultItem> VaultItems { get; set; } = [];
 }

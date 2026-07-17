@@ -85,9 +85,9 @@ test.describe('Phase 2: the will', () => {
     await page.getByRole('navigation').getByRole('link', { name: 'Dashboard' }).click()
     await expect(page.getByText(/a changed will must be signed again/i)).toBeVisible()
     await expect(page.getByText(/print it and sign with witnesses/i)).toBeVisible()
-    // household + family + will drafted = 3/8 → 38%; signing still pending
+    // household + family + will drafted = 3/9 → 33%; signing still pending
     await expect(page.getByRole('img', { name: /estate readiness/i })).toHaveAccessibleName(
-      /38 percent/,
+      /33 percent/,
     )
   })
 

@@ -150,7 +150,7 @@ public class HouseholdApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         Assert.NotNull(dashboard);
         Assert.Equal(0m, dashboard.NetEstate);
         Assert.False(dashboard.HasMinorChildren);
-        Assert.Equal(13, dashboard.ReadinessScore); // 1/8 rounded
+        Assert.Equal(11, dashboard.ReadinessScore); // 1/9 rounded
 
         // Add a minor child, an asset with a designated beneficiary, and a debt
         await _client.PostAsJsonAsync($"/api/households/{household.Id}/people",
@@ -167,8 +167,8 @@ public class HouseholdApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         Assert.Equal(150_000m, dashboard.TotalDebts);
         Assert.Equal(-110_000m, dashboard.NetEstate);
         Assert.True(dashboard.HasMinorChildren);
-        // household + family + assets + beneficiaries done = 4/8
-        Assert.Equal(50, dashboard.ReadinessScore);
+        // household + family + assets + beneficiaries done = 4/9
+        Assert.Equal(44, dashboard.ReadinessScore);
         Assert.Contains(dashboard.Checklist, i => i.Key == "will" && !i.Done && i.Detail.Contains("guardian"));
     }
 }

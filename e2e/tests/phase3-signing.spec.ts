@@ -58,11 +58,11 @@ test.describe('Phase 3: done means signed', () => {
     await expect(page.getByText(/witnessed by Wanda Witness and Wesley Witness/i)).toBeVisible()
     await expect(page.getByText(/fireproof safe in the study/i)).toBeVisible()
 
-    // Dashboard: household + family + will + sign = 4/8 → 50%, sign item checked with storage location
+    // Dashboard: household + family + will + sign = 4/9 → 44%, sign item checked with storage location
     await page.getByRole('navigation').getByRole('link', { name: 'Dashboard' }).click()
     await expect(page.getByText(/original stored: fireproof safe in the study/i)).toBeVisible()
     await expect(page.getByRole('img', { name: /estate readiness/i })).toHaveAccessibleName(
-      /50 percent/,
+      /44 percent/,
     )
 
     // Editing the will warns about, then revokes, the signing record
@@ -71,9 +71,9 @@ test.describe('Phase 3: done means signed', () => {
     await page.getByRole('button', { name: /continue/i }).click() // save step 1 → reopens draft
     await page.getByRole('navigation').getByRole('link', { name: 'Dashboard' }).click()
     await expect(page.getByText(/an unsigned will has no legal effect/i)).toBeVisible()
-    // will reopened to draft: household + family = 2/8 → 25%
+    // will reopened to draft: household + family = 2/9 → 22%
     await expect(page.getByRole('img', { name: /estate readiness/i })).toHaveAccessibleName(
-      /25 percent/,
+      /22 percent/,
     )
   })
 })

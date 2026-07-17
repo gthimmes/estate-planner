@@ -17,7 +17,7 @@ test.describe('Phase 1: know your estate', () => {
     await expect(page.getByRole('heading', { name: 'The Playwright Family' })).toBeVisible()
     await expect(page.getByText(/planning under CA law/i).first()).toBeVisible()
     const initialScore = page.getByRole('img', { name: /estate readiness/i })
-    await expect(initialScore).toHaveAccessibleName(/13 percent/)
+    await expect(initialScore).toHaveAccessibleName(/11 percent/)
 
     // --- Family: add a spouse and a minor child ---
     await page.getByRole('navigation').getByRole('link', { name: 'Family' }).click()
@@ -61,9 +61,9 @@ test.describe('Phase 1: know your estate', () => {
     await page.getByRole('navigation').getByRole('link', { name: 'Dashboard' }).click()
     await expect(page.getByTestId('net-estate')).toHaveText('$500,000')
     await expect(page.getByText(/includes minor children/i)).toBeVisible()
-    // household + family + assets done, beneficiaries still pending = 3/8 → 38%
+    // household + family + assets done, beneficiaries still pending = 3/9 → 33%
     await expect(page.getByRole('img', { name: /estate readiness/i })).toHaveAccessibleName(
-      /38 percent/,
+      /33 percent/,
     )
     await expect(page.getByText(/next up:/i)).toContainText(/beneficiary/i)
 
@@ -80,7 +80,7 @@ test.describe('Phase 1: know your estate', () => {
 
     await page.getByRole('navigation').getByRole('link', { name: 'Dashboard' }).click()
     await expect(page.getByRole('img', { name: /estate readiness/i })).toHaveAccessibleName(
-      /50 percent/,
+      /44 percent/,
     )
     await expect(page.getByText(/next up:/i)).toContainText(/will/i)
   })

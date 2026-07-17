@@ -38,6 +38,7 @@ public class AssetsController(AppDbContext db) : ControllerBase
             OwnerPersonId = request.OwnerPersonId,
             BeneficiaryStatus = request.BeneficiaryStatus,
             BeneficiaryName = request.BeneficiaryName,
+            HeldInTrust = request.HeldInTrust,
             Notes = request.Notes,
         };
         db.Assets.Add(asset);
@@ -59,6 +60,7 @@ public class AssetsController(AppDbContext db) : ControllerBase
         asset.OwnerPersonId = request.OwnerPersonId;
         asset.BeneficiaryStatus = request.BeneficiaryStatus;
         asset.BeneficiaryName = request.BeneficiaryName;
+        asset.HeldInTrust = request.HeldInTrust;
         asset.Notes = request.Notes;
         await db.SaveChangesAsync();
         return AssetResponse.From(asset);

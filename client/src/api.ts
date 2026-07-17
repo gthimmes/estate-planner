@@ -8,6 +8,10 @@ import type {
   MaritalStatus,
   MarkExecutedInput,
   Person,
+  TrustPlan,
+  TrustPlanInput,
+  VaultItem,
+  VaultSummary,
   WillDocument,
   WillPlan,
   WillPlanInput,
@@ -39,7 +43,7 @@ export interface HouseholdInput {
 }
 
 export type PersonInput = Omit<Person, 'id'>
-export type AssetInput = Omit<Asset, 'id'>
+export type AssetInput = Omit<Asset, 'id' | 'probateStatus'>
 
 export const api = {
   createHousehold: (input: HouseholdInput) =>
@@ -99,6 +103,28 @@ export const api = {
     }),
   getEstateDocumentRender: (householdId: string, type: EstateDocumentType) =>
     request<WillDocument>(`/api/households/${householdId}/documents/${type}/document`),
+
+  getTrust: (householdId: string) => request<TrustPlan>(`/api/households/${householdId}/trust`),
+  saveTrust: (householdId: string, input: TrustPlanInput) =>
+    request<TrustPlan>(`/api/households/${householdId}/trust`, { method: 'PUT', body: JSON.stringify(input) }),
+  completeTrust: (householdId: string) =>
+    request<TrustPlan>(`/api/households/${householdId}/trust/complete`, { method: 'POST' }),
+  markTrustExecuted: (householdId: string, input: { executedOn: string; executionNotes: string | null }) =>
+    request<TrustPlan>(`/api/households/${householdId}/trust/execution`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  getTrustRender: (householdId: string) =>
+    request<WillDocument>(`/api/households/${householdId}/trust/document`),
+
+  getVault: (householdId: string) => request<VaultSummary>(`/api/households/${householdId}/vault`),
+  createVaultItem: (householdId: string, input: Omit<VaultItem, 'id' | 'updatedAt'>) =>
+    request<VaultItem>(`/api/households/${householdId}/vault/items`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  deleteVaultItem: (householdId: string, itemId: string) =>
+    request<void>(`/api/households/${householdId}/vault/items/${itemId}`, { method: 'DELETE' }),
 }
 
 const HOUSEHOLD_KEY = 'estate-planner.householdId'

@@ -25,7 +25,8 @@ public record AssetRequest(
     Guid? OwnerPersonId,
     BeneficiaryStatus BeneficiaryStatus,
     string? BeneficiaryName,
-    string? Notes);
+    string? Notes,
+    bool HeldInTrust = false);
 
 public record AssetResponse(
     Guid Id,
@@ -35,10 +36,13 @@ public record AssetResponse(
     Guid? OwnerPersonId,
     BeneficiaryStatus BeneficiaryStatus,
     string? BeneficiaryName,
-    string? Notes)
+    string? Notes,
+    bool HeldInTrust = false,
+    ProbateStatus ProbateStatus = ProbateStatus.NotApplicable)
 {
     public static AssetResponse From(Asset a) =>
-        new(a.Id, a.Name, a.Category, a.EstimatedValue, a.OwnerPersonId, a.BeneficiaryStatus, a.BeneficiaryName, a.Notes);
+        new(a.Id, a.Name, a.Category, a.EstimatedValue, a.OwnerPersonId, a.BeneficiaryStatus, a.BeneficiaryName,
+            a.Notes, a.HeldInTrust, a.ProbateStatus);
 }
 
 public record ReadinessItem(string Key, string Label, bool Done, string Detail);
@@ -51,4 +55,5 @@ public record DashboardResponse(
     int AssetCount,
     bool HasMinorChildren,
     int ReadinessScore,
-    IReadOnlyList<ReadinessItem> Checklist);
+    IReadOnlyList<ReadinessItem> Checklist,
+    decimal ProbateExposedValue = 0m);

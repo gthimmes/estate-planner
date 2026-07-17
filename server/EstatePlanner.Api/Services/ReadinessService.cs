@@ -72,6 +72,7 @@ public class ReadinessService(TimeProvider time)
             DocumentItem(household, EstateDocumentType.HealthcareDirective,
                 "healthcare", "Advance healthcare directive",
                 "Your medical wishes, and who speaks for you."),
+            TrustItem(household),
         };
 
         var score = (int)Math.Round(100.0 * checklist.Count(i => i.Done) / checklist.Count, MidpointRounding.AwayFromZero);
@@ -84,7 +85,26 @@ public class ReadinessService(TimeProvider time)
             AssetCount: household.Assets.Count,
             HasMinorChildren: hasMinorChildren,
             ReadinessScore: score,
-            Checklist: checklist);
+            Checklist: checklist,
+            ProbateExposedValue: assets.Where(a => a.ProbateStatus == ProbateStatus.LikelyProbate).Sum(a => a.EstimatedValue));
+    }
+
+    private static ReadinessItem TrustItem(Household household)
+    {
+        var trust = household.TrustPlan;
+        var fundable = household.Assets.Where(a => !a.IsDebt).ToList();
+        var unfunded = fundable.Count(a => !a.HeldInTrust);
+        return new ReadinessItem("trust", "Consider a living trust",
+            trust?.Status == DocumentStatus.Executed,
+            trust?.Status switch
+            {
+                DocumentStatus.Executed when unfunded > 0 && fundable.Count > 0 =>
+                    $"Signed — but {unfunded} {(unfunded == 1 ? "asset isn't" : "assets aren't")} retitled into it yet. An unfunded trust avoids nothing.",
+                DocumentStatus.Executed => $"Signed on {trust.ExecutedOn:MMMM d, yyyy} and funded.",
+                DocumentStatus.Complete => "Drafted — sign it before a notary, then fund it.",
+                DocumentStatus.Draft => "You've started — pick up where you left off.",
+                _ => "Skips probate for whatever it holds. Most useful if you own a home.",
+            });
     }
 
     private static ReadinessItem DocumentItem(

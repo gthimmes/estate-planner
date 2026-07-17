@@ -15,6 +15,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<ReadinessService>();
 builder.Services.AddSingleton<WillService>();
 builder.Services.AddSingleton<EstateDocumentService>();
+builder.Services.AddSingleton<TrustService>();
 
 builder.Services.AddCors(options =>
 {

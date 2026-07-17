@@ -91,14 +91,14 @@ test.describe('Phase 4: POA and healthcare directive', () => {
     await page.getByRole('button', { name: /i signed it/i }).click()
     await expect(page.getByText(/editing below revokes the signing record/i)).toBeVisible()
 
-    // household + family + healthcare = 3/8 → 38%
+    // household + family + healthcare = 3/9 → 33%
     await page.getByRole('navigation').getByRole('link', { name: 'Dashboard' }).click()
     const healthcareItem = page
       .getByRole('listitem')
       .filter({ hasText: 'Advance healthcare directive' })
     await expect(healthcareItem).toContainText(/signed on/i)
     await expect(page.getByRole('img', { name: /estate readiness/i })).toHaveAccessibleName(
-      /38 percent/,
+      /33 percent/,
     )
   })
 })

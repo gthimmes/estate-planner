@@ -22,9 +22,9 @@ public class ReadinessServiceTests
     {
         var dashboard = _service.BuildDashboard(EmptyHousehold());
 
-        Assert.Equal(8, dashboard.Checklist.Count);
+        Assert.Equal(9, dashboard.Checklist.Count);
         Assert.Single(dashboard.Checklist, i => i.Done);
-        Assert.Equal(13, dashboard.ReadinessScore);
+        Assert.Equal(11, dashboard.ReadinessScore);
     }
 
     [Fact]

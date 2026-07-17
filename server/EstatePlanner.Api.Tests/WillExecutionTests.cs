@@ -102,13 +102,13 @@ public class WillExecutionTests(ApiFixture fixture) : IClassFixture<ApiFixture>
             $"/api/households/{householdId}/will/document", Json);
         Assert.False(document!.IsDraft);
 
-        // Readiness: household + family + will + sign = 4/8 = 50
+        // Readiness: household + family + will + sign = 4/9 = 44
         var dashboard = await _client.GetFromJsonAsync<DashboardResponse>(
             $"/api/households/{householdId}/dashboard", Json);
         var sign = dashboard!.Checklist.Single(i => i.Key == "sign");
         Assert.True(sign.Done);
         Assert.Contains("Fireproof safe", sign.Detail);
-        Assert.Equal(50, dashboard.ReadinessScore);
+        Assert.Equal(44, dashboard.ReadinessScore);
 
         // Editing the will revokes execution — a changed will must be re-signed
         await _client.PutAsJsonAsync($"/api/households/{householdId}/will", new SaveWillRequest(

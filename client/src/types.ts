@@ -33,6 +33,12 @@ export interface Person {
   dateOfBirth: string | null
 }
 
+export type ProbateStatus =
+  | 'NotApplicable'
+  | 'AvoidsProbateTrust'
+  | 'AvoidsProbateBeneficiary'
+  | 'LikelyProbate'
+
 export interface Asset {
   id: string
   name: string
@@ -41,6 +47,8 @@ export interface Asset {
   ownerPersonId: string | null
   beneficiaryStatus: BeneficiaryStatus
   beneficiaryName: string | null
+  heldInTrust: boolean
+  probateStatus: ProbateStatus
   notes: string | null
 }
 
@@ -60,6 +68,7 @@ export interface Dashboard {
   hasMinorChildren: boolean
   readinessScore: number
   checklist: ReadinessItem[]
+  probateExposedValue: number
 }
 
 export type WillStatus = 'Draft' | 'Complete' | 'Executed'
@@ -156,6 +165,76 @@ export type EstateDocumentInput = Omit<
   EstateDocument,
   'id' | 'type' | 'status' | 'executedOn' | 'executionNotes' | 'updatedAt'
 >
+
+export interface TrustPlan {
+  id: string
+  grantorPersonId: string | null
+  successorTrusteePersonId: string | null
+  backupTrusteePersonId: string | null
+  distributionStrategy: ResiduaryStrategy
+  distributionShares: ResiduaryShare[]
+  status: DocumentStatus
+  executedOn: string | null
+  executionNotes: string | null
+  fundedAssetCount: number
+  fundableAssetCount: number
+  updatedAt: string
+}
+
+export type TrustPlanInput = Pick<
+  TrustPlan,
+  | 'grantorPersonId'
+  | 'successorTrusteePersonId'
+  | 'backupTrusteePersonId'
+  | 'distributionStrategy'
+  | 'distributionShares'
+>
+
+export type VaultItemCategory =
+  | 'PropertyDeed'
+  | 'InsurancePolicy'
+  | 'PasswordManager'
+  | 'DigitalAccount'
+  | 'FuneralWishes'
+  | 'Letter'
+  | 'Other'
+
+export interface VaultItem {
+  id: string
+  name: string
+  category: VaultItemCategory
+  location: string | null
+  notes: string | null
+  updatedAt: string
+}
+
+export interface VaultSummary {
+  documents: {
+    key: string
+    title: string
+    status: string
+    executedOn: string | null
+    storageLocation: string | null
+  }[]
+  items: VaultItem[]
+}
+
+export const VAULT_CATEGORY_LABELS: Record<VaultItemCategory, string> = {
+  PropertyDeed: 'Property deed',
+  InsurancePolicy: 'Insurance policy',
+  PasswordManager: 'Password manager',
+  DigitalAccount: 'Digital account',
+  FuneralWishes: 'Funeral wishes',
+  Letter: 'Letter to loved ones',
+  Other: 'Other',
+}
+
+export const PROBATE_LABELS: Record<ProbateStatus, string> = {
+  NotApplicable: '—',
+  AvoidsProbateTrust: 'Skips probate (in trust)',
+  AvoidsProbateBeneficiary: 'Skips probate (beneficiary)',
+  LikelyProbate: 'Goes through probate',
+}
 
 export function isMinor(person: Person, today = new Date()): boolean {
   if (person.role !== 'Child') return false

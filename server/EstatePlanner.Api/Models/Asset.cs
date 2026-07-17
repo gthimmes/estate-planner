@@ -37,6 +37,8 @@ public class Asset
     public Guid? OwnerPersonId { get; set; }
     public BeneficiaryStatus BeneficiaryStatus { get; set; }
     public string? BeneficiaryName { get; set; }
+    /// <summary>Retitled into the household's living trust ("funded").</summary>
+    public bool HeldInTrust { get; set; }
     public string? Notes { get; set; }
 
     public Household? Household { get; set; }
@@ -51,4 +53,19 @@ public class Asset
         AssetCategory.Retirement,
         AssetCategory.LifeInsurance,
     ];
+
+    /// <summary>How this asset would pass at death, given its titling and designations.</summary>
+    public ProbateStatus ProbateStatus =>
+        IsDebt ? ProbateStatus.NotApplicable
+        : HeldInTrust ? ProbateStatus.AvoidsProbateTrust
+        : BeneficiaryStatus == BeneficiaryStatus.Designated ? ProbateStatus.AvoidsProbateBeneficiary
+        : ProbateStatus.LikelyProbate;
+}
+
+public enum ProbateStatus
+{
+    NotApplicable,
+    AvoidsProbateTrust,
+    AvoidsProbateBeneficiary,
+    LikelyProbate,
 }

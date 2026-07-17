@@ -10,6 +10,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Asset> Assets => Set<Asset>();
     public DbSet<WillPlan> WillPlans => Set<WillPlan>();
     public DbSet<EstateDocument> EstateDocuments => Set<EstateDocument>();
+    public DbSet<TrustPlan> TrustPlans => Set<TrustPlan>();
+    public DbSet<VaultItem> VaultItems => Set<VaultItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -37,6 +39,25 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(w => w.ResiduaryStrategy).HasConversion<string>().HasMaxLength(30);
             e.OwnsMany(w => w.Gifts, b => b.ToJson());
             e.OwnsMany(w => w.ResiduaryShares, b => b.ToJson());
+        });
+
+        modelBuilder.Entity<TrustPlan>(e =>
+        {
+            e.HasOne(t => t.Household).WithOne(h => h.TrustPlan).HasForeignKey<TrustPlan>(t => t.HouseholdId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(t => t.HouseholdId).IsUnique();
+            e.Property(t => t.Status).HasConversion<string>().HasMaxLength(20);
+            e.Property(t => t.DistributionStrategy).HasConversion<string>().HasMaxLength(30);
+            e.Property(t => t.ExecutionNotes).HasMaxLength(500);
+            e.OwnsMany(t => t.DistributionShares, b => b.ToJson());
+        });
+
+        modelBuilder.Entity<VaultItem>(e =>
+        {
+            e.HasOne(v => v.Household).WithMany(h => h.VaultItems).HasForeignKey(v => v.HouseholdId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(v => v.Name).HasMaxLength(200);
+            e.Property(v => v.Category).HasConversion<string>().HasMaxLength(30);
+            e.Property(v => v.Location).HasMaxLength(500);
+            e.Property(v => v.Notes).HasMaxLength(2000);
         });
 
         modelBuilder.Entity<EstateDocument>(e =>

@@ -144,11 +144,11 @@ public class WillApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         Assert.Contains(document.BeneficiaryConflictNotes, n => n.Contains("Fidelity 401(k)"));
         Assert.Contains("not legal advice", document.Disclosure);
 
-        // Dashboard readiness counts the drafted will but not the unsigned one (5 of 8 = 63%)
+        // Dashboard readiness counts the drafted will but not the unsigned one (5 of 9 = 56%)
         var dashboard = await _client.GetFromJsonAsync<DashboardResponse>($"/api/households/{householdId}/dashboard", Json);
         Assert.Contains(dashboard!.Checklist, i => i.Key == "will" && i.Done);
         Assert.Contains(dashboard.Checklist, i => i.Key == "sign" && !i.Done);
-        Assert.Equal(63, dashboard.ReadinessScore);
+        Assert.Equal(56, dashboard.ReadinessScore);
 
         // Editing the will reopens the draft
         await _client.PutAsJsonAsync($"/api/households/{householdId}/will", CompleteWill(self, spouse, child), Json);

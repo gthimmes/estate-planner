@@ -3,6 +3,7 @@ import { api, formatCurrency } from '../api'
 import {
   ASSET_CATEGORY_LABELS,
   DESIGNATABLE_CATEGORIES,
+  PROBATE_LABELS,
   type Asset,
   type AssetCategory,
   type BeneficiaryStatus,
@@ -59,6 +60,7 @@ export function Assets({ householdId }: { householdId: string }) {
         ownerPersonId: form.ownerPersonId || null,
         beneficiaryStatus: designatable ? form.beneficiaryStatus : 'NotApplicable',
         beneficiaryName: designatable && form.beneficiaryStatus === 'Designated' ? form.beneficiaryName : null,
+        heldInTrust: false,
         notes: null,
       })
       setForm(EMPTY_FORM)
@@ -201,6 +203,7 @@ export function Assets({ householdId }: { householdId: string }) {
                 <th>Category</th>
                 <th>Value</th>
                 <th>Beneficiary</th>
+                <th>Probate</th>
                 <th aria-label="actions" />
               </tr>
             </thead>
@@ -223,6 +226,17 @@ export function Assets({ householdId }: { householdId: string }) {
                       </span>
                     ) : (
                       '—'
+                    )}
+                  </td>
+                  <td>
+                    {a.probateStatus === 'NotApplicable' ? (
+                      '—'
+                    ) : (
+                      <span
+                        className={`badge ${a.probateStatus === 'LikelyProbate' ? 'none' : 'designated'}`}
+                      >
+                        {PROBATE_LABELS[a.probateStatus]}
+                      </span>
                     )}
                   </td>
                   <td>

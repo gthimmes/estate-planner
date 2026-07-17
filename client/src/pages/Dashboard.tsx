@@ -61,6 +61,11 @@ export function Dashboard({ householdId }: { householdId: string }) {
             {formatCurrency(dashboard.totalAssets)} in assets −{' '}
             {formatCurrency(dashboard.totalDebts)} in debts
           </p>
+          {dashboard.probateExposedValue > 0 && (
+            <p className="detail probate-exposure">
+              {formatCurrency(dashboard.probateExposedValue)} would go through probate today
+            </p>
+          )}
         </div>
         <div className="card stat">
           <h2>Your people</h2>

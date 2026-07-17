@@ -18,6 +18,7 @@ public class DashboardController(AppDbContext db, ReadinessService readiness) : 
             .Include(h => h.Assets)
             .Include(h => h.WillPlan)
             .Include(h => h.Documents)
+            .Include(h => h.TrustPlan)
             .AsSplitQuery()
             .FirstOrDefaultAsync(h => h.Id == householdId);
         return household is null ? NotFound() : readiness.BuildDashboard(household);

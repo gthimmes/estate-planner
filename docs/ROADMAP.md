@@ -39,12 +39,13 @@ Quality gate: every feature ships with xUnit integration tests (real Postgres vi
 - [x] Agent selection UX shared across documents; sign-and-record flow matches the will's
 - [x] E2E per document type
 
-## Phase 5 — The complete plan
-- [ ] Revocable living trust interview + funding checklist (retitle assets tracked in inventory)
-- [ ] Probate-avoidance flags per asset
-- [ ] Document vault (executed doc uploads, original-location pointers)
-- [ ] Digital assets & final wishes capture
-- [ ] E2E: trust creation + funding checklist flow
+## Phase 5 — The complete plan ✅
+- [x] Revocable living trust interview + funding checklist (retitle assets tracked in inventory; Schedule A auto-lists funded assets)
+- [x] Probate-avoidance flags per asset + dashboard probate-exposure total
+- [x] Document vault: statuses/locations of all four documents + pointers (deeds, policies, password manager, funeral wishes, letters)
+- [x] Digital assets & final wishes captured as vault pointers
+- [x] E2E: trust creation + funding checklist flow; vault aggregation
+- [ ] Deferred: executed-document file uploads (Phase 6, alongside auth)
 
 ## Phase 6 — The living plan
 - [ ] Accounts & authentication (until here, local single-household use; auth before any sharing/cloud deploy)
