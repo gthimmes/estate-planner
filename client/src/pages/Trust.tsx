@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { api } from '../api'
 import { ExecutionInstructions, LegalDocumentView } from '../components/LegalDocumentView'
 import { PersonSelect } from '../components/PersonSelect'
+import { PersonTabs } from '../components/PersonTabs'
 import {
   ASSET_CATEGORY_LABELS,
   isMinor,
@@ -17,6 +18,7 @@ export function Trust({ householdId }: { householdId: string }) {
   const [people, setPeople] = useState<Person[]>([])
   const [assets, setAssets] = useState<Asset[]>([])
   const [form, setForm] = useState<TrustPlanInput | null>(null)
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null)
   const [status, setStatus] = useState<TrustPlan['status']>('Draft')
   const [executedOn, setExecutedOn] = useState<string | null>(null)
   const [render, setRender] = useState<WillDocument | null>(null)
@@ -30,12 +32,19 @@ export function Trust({ householdId }: { householdId: string }) {
   )
 
   useEffect(() => {
-    Promise.all([api.getTrust(householdId), api.listPeople(householdId), api.listAssets(householdId)])
+    Promise.all([
+      api.getTrust(householdId, selectedPersonId),
+      api.listPeople(householdId),
+      api.listAssets(householdId),
+    ])
       .then(([trust, ppl, a]) => {
         setPeople(ppl)
         setAssets(a)
         setStatus(trust.status)
         setExecutedOn(trust.executedOn)
+        setSelectedPersonId(
+          (prev) => prev ?? trust.grantorPersonId ?? ppl.find((p) => p.role === 'Self')?.id ?? null,
+        )
         setForm(
           (prev) =>
             prev ?? {
@@ -47,11 +56,18 @@ export function Trust({ householdId }: { householdId: string }) {
             },
         )
         if (trust.status !== 'Draft') {
-          void api.getTrustRender(householdId).then(setRender)
+          void api.getTrustRender(householdId, trust.grantorPersonId).then(setRender)
         }
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load'))
-  }, [householdId])
+  }, [householdId, selectedPersonId])
+
+  function switchPerson(id: string) {
+    if (id === selectedPersonId) return
+    setForm(null)
+    setRender(null)
+    setSelectedPersonId(id)
+  }
 
   const adults = useMemo(() => people.filter((p) => !isMinor(p)), [people])
   const hasSpouse = people.some((p) => p.role === 'Spouse')
@@ -89,9 +105,9 @@ export function Trust({ householdId }: { householdId: string }) {
     setSaving(true)
     try {
       await api.saveTrust(householdId, form)
-      const trust = await api.completeTrust(householdId)
+      const trust = await api.completeTrust(householdId, form.grantorPersonId)
       setStatus(trust.status)
-      setRender(await api.getTrustRender(householdId))
+      setRender(await api.getTrustRender(householdId, form.grantorPersonId))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not finish')
     } finally {
@@ -101,16 +117,18 @@ export function Trust({ householdId }: { householdId: string }) {
 
   async function recordSigning(e: React.FormEvent) {
     e.preventDefault()
+    if (!form) return
     setError(null)
     setSaving(true)
     try {
-      const trust = await api.markTrustExecuted(householdId, {
-        executedOn: signDate,
-        executionNotes: null,
-      })
+      const trust = await api.markTrustExecuted(
+        householdId,
+        { executedOn: signDate, executionNotes: null },
+        form.grantorPersonId,
+      )
       setStatus(trust.status)
       setExecutedOn(trust.executedOn)
-      setRender(await api.getTrustRender(householdId))
+      setRender(await api.getTrustRender(householdId, form.grantorPersonId))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not record signing')
     } finally {
@@ -130,7 +148,7 @@ export function Trust({ householdId }: { householdId: string }) {
       notes: asset.notes,
     })
     await reloadAssets()
-    if (render) setRender(await api.getTrustRender(householdId))
+    if (render && form) setRender(await api.getTrustRender(householdId, form.grantorPersonId))
   }
 
   return (
@@ -151,6 +169,13 @@ export function Trust({ householdId }: { householdId: string }) {
         )}
       </header>
 
+      <PersonTabs
+        people={adults}
+        activeId={selectedPersonId}
+        onSelect={switchPerson}
+        label="Whose trust"
+      />
+
       {executed && (
         <aside className="banner success no-print" role="status">
           <strong>Signed on {executedOn}.</strong> Now fund it below — an unfunded trust avoids
@@ -165,7 +190,10 @@ export function Trust({ householdId }: { householdId: string }) {
             <PersonSelect
               people={adults}
               value={form.grantorPersonId}
-              onChange={(id) => set({ grantorPersonId: id })}
+              onChange={(id) => {
+                set({ grantorPersonId: id })
+                if (id) switchPerson(id)
+              }}
             />
           </label>
           <label>

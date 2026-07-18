@@ -90,15 +90,16 @@ public class ReadinessServiceTests
     public void Will_item_counts_when_complete_but_sign_item_waits_for_execution()
     {
         var household = EmptyHousehold();
-        household.WillPlan = new WillPlan { Status = WillStatus.Complete };
+        var will = new WillPlan { Status = WillStatus.Complete };
+        household.WillPlans.Add(will);
 
         var dashboard = _service.BuildDashboard(household);
         Assert.True(dashboard.Checklist.Single(i => i.Key == "will").Done);
         Assert.False(dashboard.Checklist.Single(i => i.Key == "sign").Done);
 
-        household.WillPlan.Status = WillStatus.Executed;
-        household.WillPlan.ExecutedOn = new DateOnly(2026, 7, 1);
-        household.WillPlan.StorageLocation = "fireproof safe in the study";
+        will.Status = WillStatus.Executed;
+        will.ExecutedOn = new DateOnly(2026, 7, 1);
+        will.StorageLocation = "fireproof safe in the study";
 
         dashboard = _service.BuildDashboard(household);
         var sign = dashboard.Checklist.Single(i => i.Key == "sign");

@@ -14,33 +14,55 @@ public class VaultController(AppDbContext db, TimeProvider time) : ControllerBas
     public async Task<ActionResult<VaultSummaryResponse>> Summary(Guid householdId)
     {
         var household = await db.Households
-            .Include(h => h.WillPlan)
-            .Include(h => h.TrustPlan)
+            .Include(h => h.People)
+            .Include(h => h.WillPlans)
+            .Include(h => h.TrustPlans)
             .Include(h => h.Documents)
             .Include(h => h.VaultItems)
             .AsSplitQuery()
             .FirstOrDefaultAsync(h => h.Id == householdId);
         if (household is null) return NotFound();
 
-        var documents = new List<VaultDocumentEntry>
-        {
-            new("will", "Last will and testament",
-                household.WillPlan?.Status.ToString() ?? "NotStarted",
-                household.WillPlan?.ExecutedOn,
-                household.WillPlan?.StorageLocation),
-            new("trust", "Revocable living trust",
-                household.TrustPlan?.Status.ToString() ?? "NotStarted",
-                household.TrustPlan?.ExecutedOn,
-                household.TrustPlan?.ExecutionNotes),
-        };
+        string? NameOf(Guid? personId) =>
+            household.People.FirstOrDefault(p => p.Id == personId) is Person p
+                ? $"{p.FirstName} {p.LastName}"
+                : null;
+        // Append the owner's name only when there is more than one of a document kind.
+        string Title(string baseTitle, Guid? personId, int siblingCount) =>
+            siblingCount > 1 && NameOf(personId) is string name ? $"{baseTitle} — {name}" : baseTitle;
+
+        var documents = new List<VaultDocumentEntry>();
+
+        if (household.WillPlans.Count == 0)
+            documents.Add(new("will", "Last will and testament", "NotStarted", null, null));
+        else
+            documents.AddRange(household.WillPlans.Select(w => new VaultDocumentEntry(
+                $"will:{w.Id}",
+                Title("Last will and testament", w.TestatorPersonId, household.WillPlans.Count),
+                w.Status.ToString(), w.ExecutedOn, w.StorageLocation)));
+
+        if (household.TrustPlans.Count == 0)
+            documents.Add(new("trust", "Revocable living trust", "NotStarted", null, null));
+        else
+            documents.AddRange(household.TrustPlans.Select(t => new VaultDocumentEntry(
+                $"trust:{t.Id}",
+                Title("Revocable living trust", t.GrantorPersonId, household.TrustPlans.Count),
+                t.Status.ToString(), t.ExecutedOn, t.ExecutionNotes)));
+
         foreach (var (type, key, title) in new[]
         {
             (EstateDocumentType.FinancialPoa, "poa", "Financial power of attorney"),
             (EstateDocumentType.HealthcareDirective, "healthcare", "Advance healthcare directive"),
         })
         {
-            var doc = household.Documents.FirstOrDefault(d => d.Type == type);
-            documents.Add(new(key, title, doc?.Status.ToString() ?? "NotStarted", doc?.ExecutedOn, doc?.ExecutionNotes));
+            var docs = household.Documents.Where(d => d.Type == type).ToList();
+            if (docs.Count == 0)
+                documents.Add(new(key, title, "NotStarted", null, null));
+            else
+                documents.AddRange(docs.Select(d => new VaultDocumentEntry(
+                    $"{key}:{d.Id}",
+                    Title(title, d.PrincipalPersonId, docs.Count),
+                    d.Status.ToString(), d.ExecutedOn, d.ExecutionNotes)));
         }
 
         var items = household.VaultItems

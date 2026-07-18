@@ -12,19 +12,23 @@ namespace EstatePlanner.Api.Controllers;
 public class EstateDocumentsController(AppDbContext db, EstateDocumentService documents, TimeProvider time) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<EstateDocumentResponse>> Get(Guid householdId, EstateDocumentType type)
+    public async Task<ActionResult<EstateDocumentResponse>> Get(
+        Guid householdId, EstateDocumentType type, [FromQuery] Guid? personId)
     {
         var household = await LoadHousehold(householdId);
         if (household is null) return NotFound();
+        if (personId is Guid pid && household.People.All(p => p.Id != pid)) return NotFound();
 
-        var doc = household.Documents.FirstOrDefault(d => d.Type == type);
+        var doc = household.FindDocument(type, personId);
         if (doc is null)
         {
+            var principalId = personId ?? household.SelfPerson?.Id;
             doc = new EstateDocument
             {
                 Id = Guid.NewGuid(),
                 HouseholdId = householdId,
                 Type = type,
+                PrincipalPersonId = principalId,
                 UpdatedAt = time.GetUtcNow(),
             };
             db.EstateDocuments.Add(doc);
@@ -36,7 +40,7 @@ public class EstateDocumentsController(AppDbContext db, EstateDocumentService do
             {
                 db.Entry(doc).State = EntityState.Detached;
                 doc = await db.EstateDocuments.AsNoTracking()
-                    .FirstAsync(d => d.HouseholdId == householdId && d.Type == type);
+                    .FirstAsync(d => d.HouseholdId == householdId && d.Type == type && d.PrincipalPersonId == principalId);
             }
         }
         return EstateDocumentResponse.From(doc);
@@ -49,7 +53,10 @@ public class EstateDocumentsController(AppDbContext db, EstateDocumentService do
         var household = await LoadHousehold(householdId);
         if (household is null) return NotFound();
 
-        var doc = household.Documents.FirstOrDefault(d => d.Type == type);
+        // A document's identity is its principal: upsert that person's document,
+        // claiming any unclaimed draft (pre-multi-document data) along the way.
+        var doc = household.Documents.FirstOrDefault(d => d.Type == type && d.PrincipalPersonId == request.PrincipalPersonId)
+            ?? household.Documents.FirstOrDefault(d => d.Type == type && d.PrincipalPersonId == null);
         if (doc is null)
         {
             doc = new EstateDocument { Id = Guid.NewGuid(), HouseholdId = householdId, Type = type };
@@ -84,10 +91,11 @@ public class EstateDocumentsController(AppDbContext db, EstateDocumentService do
     }
 
     [HttpPost("complete")]
-    public async Task<ActionResult<EstateDocumentResponse>> Complete(Guid householdId, EstateDocumentType type)
+    public async Task<ActionResult<EstateDocumentResponse>> Complete(
+        Guid householdId, EstateDocumentType type, [FromQuery] Guid? personId)
     {
         var household = await LoadHousehold(householdId);
-        var doc = household?.Documents.FirstOrDefault(d => d.Type == type);
+        var doc = household?.FindDocument(type, personId);
         if (household is null || doc is null) return NotFound();
 
         var errors = documents.ValidateForCompletion(household, doc);
@@ -105,10 +113,10 @@ public class EstateDocumentsController(AppDbContext db, EstateDocumentService do
 
     [HttpPost("execution")]
     public async Task<ActionResult<EstateDocumentResponse>> MarkExecuted(
-        Guid householdId, EstateDocumentType type, MarkDocumentExecutedRequest request)
+        Guid householdId, EstateDocumentType type, MarkDocumentExecutedRequest request, [FromQuery] Guid? personId)
     {
         var household = await LoadHousehold(householdId);
-        var doc = household?.Documents.FirstOrDefault(d => d.Type == type);
+        var doc = household?.FindDocument(type, personId);
         if (doc is null) return NotFound();
 
         if (doc.Status == DocumentStatus.Draft)
@@ -125,10 +133,11 @@ public class EstateDocumentsController(AppDbContext db, EstateDocumentService do
     }
 
     [HttpGet("document")]
-    public async Task<ActionResult<WillDocumentResponse>> Document(Guid householdId, EstateDocumentType type)
+    public async Task<ActionResult<WillDocumentResponse>> Document(
+        Guid householdId, EstateDocumentType type, [FromQuery] Guid? personId)
     {
         var household = await LoadHousehold(householdId);
-        var doc = household?.Documents.FirstOrDefault(d => d.Type == type);
+        var doc = household?.FindDocument(type, personId);
         if (household is null || doc is null) return NotFound();
         return documents.BuildDocument(household, doc);
     }

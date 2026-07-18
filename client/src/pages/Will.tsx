@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { PersonSelect } from '../components/PersonSelect'
+import { PersonTabs } from '../components/PersonTabs'
 import { isMinor, type Person, type ResiduaryShare, type WillGift, type WillPlanInput } from '../types'
 
 type StepId = 'about' | 'executor' | 'guardian' | 'gifts' | 'estate' | 'review'
@@ -22,15 +23,19 @@ export function Will({ householdId }: { householdId: string }) {
   const [stateSupported, setStateSupported] = useState(true)
   const [wasExecuted, setWasExecuted] = useState(false)
   const [step, setStep] = useState<StepId>('about')
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    Promise.all([api.getWill(householdId), api.listPeople(householdId)])
+    Promise.all([api.getWill(householdId, selectedPersonId), api.listPeople(householdId)])
       .then(([will, ppl]) => {
         setPeople(ppl)
         setStateSupported(will.stateSupported)
         setWasExecuted(will.status === 'Executed')
+        setSelectedPersonId(
+          (prev) => prev ?? will.testatorPersonId ?? ppl.find((p) => p.role === 'Self')?.id ?? null,
+        )
         // prev ?? …: a late duplicate response (React StrictMode double-mount)
         // must never clobber selections the user has already made
         setForm(
@@ -50,7 +55,15 @@ export function Will({ householdId }: { householdId: string }) {
         )
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load'))
-  }, [householdId])
+  }, [householdId, selectedPersonId])
+
+  function switchPerson(id: string) {
+    if (id === selectedPersonId) return
+    setForm(null)
+    setWasExecuted(false)
+    setStep('about')
+    setSelectedPersonId(id)
+  }
 
   const adults = useMemo(() => people.filter((p) => !isMinor(p)), [people])
   const hasMinors = useMemo(() => people.some((p) => isMinor(p)), [people])
@@ -130,8 +143,10 @@ export function Will({ householdId }: { householdId: string }) {
     setSaving(true)
     try {
       await api.saveWill(householdId, form)
-      await api.completeWill(householdId)
-      navigate('/will/document')
+      await api.completeWill(householdId, form.testatorPersonId)
+      navigate(
+        form.testatorPersonId ? `/will/document?personId=${form.testatorPersonId}` : '/will/document',
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not finish')
     } finally {
@@ -157,6 +172,13 @@ export function Will({ householdId }: { householdId: string }) {
         </ol>
       </header>
 
+      <PersonTabs
+        people={adults}
+        activeId={selectedPersonId}
+        onSelect={switchPerson}
+        label="Whose will"
+      />
+
       {wasExecuted && (
         <aside className="banner warning" role="note">
           <strong>This will has been signed.</strong> Saving any change revokes the signing record —
@@ -176,7 +198,10 @@ export function Will({ householdId }: { householdId: string }) {
             <PersonSelect
               people={adults}
               value={form.testatorPersonId}
-              onChange={(id) => set({ testatorPersonId: id })}
+              onChange={(id) => {
+                set({ testatorPersonId: id })
+                if (id) switchPerson(id)
+              }}
             />
           </label>
           <div className="wizard-nav">

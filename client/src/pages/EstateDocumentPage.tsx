@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { api } from '../api'
 import { ExecutionInstructions, LegalDocumentView } from '../components/LegalDocumentView'
 import { PersonSelect } from '../components/PersonSelect'
+import { PersonTabs } from '../components/PersonTabs'
 import {
   isMinor,
   type EstateDocument,
@@ -40,6 +41,7 @@ export function EstateDocumentPage({
 }) {
   const [people, setPeople] = useState<Person[]>([])
   const [form, setForm] = useState<EstateDocumentInput | null>(null)
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null)
   const [status, setStatus] = useState<EstateDocument['status']>('Draft')
   const [executedOn, setExecutedOn] = useState<string | null>(null)
   const [render, setRender] = useState<WillDocument | null>(null)
@@ -68,16 +70,26 @@ export function EstateDocumentPage({
   }, [])
 
   useEffect(() => {
-    Promise.all([api.getEstateDocument(householdId, type), api.listPeople(householdId)])
+    Promise.all([api.getEstateDocument(householdId, type, selectedPersonId), api.listPeople(householdId)])
       .then(([doc, ppl]) => {
         setPeople(ppl)
         applyDoc(doc, ppl.find((p) => p.role === 'Self')?.id ?? null)
+        setSelectedPersonId(
+          (prev) => prev ?? doc.principalPersonId ?? ppl.find((p) => p.role === 'Self')?.id ?? null,
+        )
         if (doc.status !== 'Draft') {
-          void api.getEstateDocumentRender(householdId, type).then(setRender)
+          void api.getEstateDocumentRender(householdId, type, doc.principalPersonId).then(setRender)
         }
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load'))
-  }, [householdId, type, applyDoc])
+  }, [householdId, type, applyDoc, selectedPersonId])
+
+  function switchPerson(id: string) {
+    if (id === selectedPersonId) return
+    setForm(null)
+    setRender(null)
+    setSelectedPersonId(id)
+  }
 
   const adults = useMemo(() => people.filter((p) => !isMinor(p)), [people])
 
@@ -112,9 +124,9 @@ export function EstateDocumentPage({
     setSaving(true)
     try {
       await api.saveEstateDocument(householdId, type, form)
-      const doc = await api.completeEstateDocument(householdId, type)
+      const doc = await api.completeEstateDocument(householdId, type, form.principalPersonId)
       setStatus(doc.status)
-      setRender(await api.getEstateDocumentRender(householdId, type))
+      setRender(await api.getEstateDocumentRender(householdId, type, form.principalPersonId))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not finish')
     } finally {
@@ -124,16 +136,19 @@ export function EstateDocumentPage({
 
   async function recordSigning(e: React.FormEvent) {
     e.preventDefault()
+    if (!form) return
     setError(null)
     setSaving(true)
     try {
-      const doc = await api.markEstateDocumentExecuted(householdId, type, {
-        executedOn: signDate,
-        executionNotes: signNotes || null,
-      })
+      const doc = await api.markEstateDocumentExecuted(
+        householdId,
+        type,
+        { executedOn: signDate, executionNotes: signNotes || null },
+        form.principalPersonId,
+      )
       setStatus(doc.status)
       setExecutedOn(doc.executedOn)
-      setRender(await api.getEstateDocumentRender(householdId, type))
+      setRender(await api.getEstateDocumentRender(householdId, type, form.principalPersonId))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not record signing')
     } finally {
@@ -155,6 +170,13 @@ export function EstateDocumentPage({
         )}
       </header>
 
+      <PersonTabs
+        people={adults}
+        activeId={selectedPersonId}
+        onSelect={switchPerson}
+        label="Whose document"
+      />
+
       {executed && (
         <aside className="banner success no-print" role="status">
           <strong>Signed on {executedOn}.</strong> Editing below revokes the signing record.
@@ -168,7 +190,10 @@ export function EstateDocumentPage({
             <PersonSelect
               people={adults}
               value={form.principalPersonId}
-              onChange={(id) => set({ principalPersonId: id })}
+              onChange={(id) => {
+                set({ principalPersonId: id })
+                if (id) switchPerson(id)
+              }}
             />
           </label>
           <label>

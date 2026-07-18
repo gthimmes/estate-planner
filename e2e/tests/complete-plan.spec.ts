@@ -101,7 +101,7 @@ test.describe('The complete plan', () => {
     await page.getByRole('button', { name: /finish my will/i }).click()
 
     // The generated will contains every provision
-    await expect(page).toHaveURL(/\/will\/document$/)
+    await expect(page).toHaveURL(/\/will\/document/)
     const willDoc = page.locator('.legal-document')
     await expect(
       page.getByRole('heading', { name: /last will and testament of morgan planner/i }),

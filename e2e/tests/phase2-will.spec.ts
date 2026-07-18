@@ -58,7 +58,7 @@ test.describe('Phase 2: the will', () => {
     await page.getByRole('button', { name: /finish my will/i }).click()
 
     // --- Document ---
-    await expect(page).toHaveURL(/\/will\/document$/)
+    await expect(page).toHaveURL(/\/will\/document/)
     await expect(page.getByRole('heading', { name: /your will is drafted/i })).toBeVisible()
     await expect(
       page.getByRole('heading', { name: /last will and testament of taylor testator/i }),

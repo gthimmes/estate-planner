@@ -135,7 +135,7 @@ public class TrustAndVaultTests(ApiFixture fixture) : IClassFixture<ApiFixture>
             new VaultItemRequest("House deed", VaultItemCategory.PropertyDeed, "Safe deposit box #12", null), Json);
 
         vault = await _client.GetFromJsonAsync<VaultSummaryResponse>($"/api/households/{householdId}/vault", Json);
-        var willEntry = vault!.Documents.Single(d => d.Key == "will");
+        var willEntry = vault!.Documents.Single(d => d.Key.StartsWith("will"));
         Assert.Equal("Executed", willEntry.Status);
         Assert.Equal("Desk drawer", willEntry.StorageLocation);
         Assert.Equal("Safe deposit box #12", vault.Items.Single().Location);

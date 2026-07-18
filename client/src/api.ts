@@ -19,6 +19,8 @@ import type {
 
 export class NotFoundError extends Error {}
 
+const personQuery = (personId?: string | null) => (personId ? `?personId=${personId}` : '')
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response
   try {
@@ -81,52 +83,61 @@ export const api = {
 
   getDashboard: (householdId: string) => request<Dashboard>(`/api/households/${householdId}/dashboard`),
 
-  getWill: (householdId: string) => request<WillPlan>(`/api/households/${householdId}/will`),
+  getWill: (householdId: string, personId?: string | null) =>
+    request<WillPlan>(`/api/households/${householdId}/will${personQuery(personId)}`),
   saveWill: (householdId: string, input: WillPlanInput) =>
     request<WillPlan>(`/api/households/${householdId}/will`, { method: 'PUT', body: JSON.stringify(input) }),
-  completeWill: (householdId: string) =>
-    request<WillPlan>(`/api/households/${householdId}/will/complete`, { method: 'POST' }),
-  getWillDocument: (householdId: string) =>
-    request<WillDocument>(`/api/households/${householdId}/will/document`),
-  markWillExecuted: (householdId: string, input: MarkExecutedInput) =>
-    request<WillPlan>(`/api/households/${householdId}/will/execution`, {
+  completeWill: (householdId: string, personId?: string | null) =>
+    request<WillPlan>(`/api/households/${householdId}/will/complete${personQuery(personId)}`, { method: 'POST' }),
+  getWillDocument: (householdId: string, personId?: string | null) =>
+    request<WillDocument>(`/api/households/${householdId}/will/document${personQuery(personId)}`),
+  markWillExecuted: (householdId: string, input: MarkExecutedInput, personId?: string | null) =>
+    request<WillPlan>(`/api/households/${householdId}/will/execution${personQuery(personId)}`, {
       method: 'POST',
       body: JSON.stringify(input),
     }),
 
-  getEstateDocument: (householdId: string, type: EstateDocumentType) =>
-    request<EstateDocument>(`/api/households/${householdId}/documents/${type}`),
+  getEstateDocument: (householdId: string, type: EstateDocumentType, personId?: string | null) =>
+    request<EstateDocument>(`/api/households/${householdId}/documents/${type}${personQuery(personId)}`),
   saveEstateDocument: (householdId: string, type: EstateDocumentType, input: EstateDocumentInput) =>
     request<EstateDocument>(`/api/households/${householdId}/documents/${type}`, {
       method: 'PUT',
       body: JSON.stringify(input),
     }),
-  completeEstateDocument: (householdId: string, type: EstateDocumentType) =>
-    request<EstateDocument>(`/api/households/${householdId}/documents/${type}/complete`, { method: 'POST' }),
+  completeEstateDocument: (householdId: string, type: EstateDocumentType, personId?: string | null) =>
+    request<EstateDocument>(`/api/households/${householdId}/documents/${type}/complete${personQuery(personId)}`, {
+      method: 'POST',
+    }),
   markEstateDocumentExecuted: (
     householdId: string,
     type: EstateDocumentType,
     input: { executedOn: string; executionNotes: string | null },
+    personId?: string | null,
   ) =>
-    request<EstateDocument>(`/api/households/${householdId}/documents/${type}/execution`, {
+    request<EstateDocument>(`/api/households/${householdId}/documents/${type}/execution${personQuery(personId)}`, {
       method: 'POST',
       body: JSON.stringify(input),
     }),
-  getEstateDocumentRender: (householdId: string, type: EstateDocumentType) =>
-    request<WillDocument>(`/api/households/${householdId}/documents/${type}/document`),
+  getEstateDocumentRender: (householdId: string, type: EstateDocumentType, personId?: string | null) =>
+    request<WillDocument>(`/api/households/${householdId}/documents/${type}/document${personQuery(personId)}`),
 
-  getTrust: (householdId: string) => request<TrustPlan>(`/api/households/${householdId}/trust`),
+  getTrust: (householdId: string, personId?: string | null) =>
+    request<TrustPlan>(`/api/households/${householdId}/trust${personQuery(personId)}`),
   saveTrust: (householdId: string, input: TrustPlanInput) =>
     request<TrustPlan>(`/api/households/${householdId}/trust`, { method: 'PUT', body: JSON.stringify(input) }),
-  completeTrust: (householdId: string) =>
-    request<TrustPlan>(`/api/households/${householdId}/trust/complete`, { method: 'POST' }),
-  markTrustExecuted: (householdId: string, input: { executedOn: string; executionNotes: string | null }) =>
-    request<TrustPlan>(`/api/households/${householdId}/trust/execution`, {
+  completeTrust: (householdId: string, personId?: string | null) =>
+    request<TrustPlan>(`/api/households/${householdId}/trust/complete${personQuery(personId)}`, { method: 'POST' }),
+  markTrustExecuted: (
+    householdId: string,
+    input: { executedOn: string; executionNotes: string | null },
+    personId?: string | null,
+  ) =>
+    request<TrustPlan>(`/api/households/${householdId}/trust/execution${personQuery(personId)}`, {
       method: 'POST',
       body: JSON.stringify(input),
     }),
-  getTrustRender: (householdId: string) =>
-    request<WillDocument>(`/api/households/${householdId}/trust/document`),
+  getTrustRender: (householdId: string, personId?: string | null) =>
+    request<WillDocument>(`/api/households/${householdId}/trust/document${personQuery(personId)}`),
 
   getVault: (householdId: string) => request<VaultSummary>(`/api/households/${householdId}/vault`),
   createVaultItem: (householdId: string, input: Omit<VaultItem, 'id' | 'updatedAt'>) =>

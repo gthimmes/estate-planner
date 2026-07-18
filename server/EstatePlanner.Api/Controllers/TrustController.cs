@@ -12,15 +12,23 @@ namespace EstatePlanner.Api.Controllers;
 public class TrustController(AppDbContext db, TrustService trustService, TimeProvider time) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<TrustPlanResponse>> Get(Guid householdId)
+    public async Task<ActionResult<TrustPlanResponse>> Get(Guid householdId, [FromQuery] Guid? personId)
     {
         var household = await LoadHousehold(householdId);
         if (household is null) return NotFound();
+        if (personId is Guid pid && household.People.All(p => p.Id != pid)) return NotFound();
 
-        var trust = household.TrustPlan;
+        var trust = household.FindTrust(personId);
         if (trust is null)
         {
-            trust = new TrustPlan { Id = Guid.NewGuid(), HouseholdId = householdId, UpdatedAt = time.GetUtcNow() };
+            var grantorId = personId ?? household.SelfPerson?.Id;
+            trust = new TrustPlan
+            {
+                Id = Guid.NewGuid(),
+                HouseholdId = householdId,
+                GrantorPersonId = grantorId,
+                UpdatedAt = time.GetUtcNow(),
+            };
             db.TrustPlans.Add(trust);
             try
             {
@@ -29,7 +37,8 @@ public class TrustController(AppDbContext db, TrustService trustService, TimePro
             catch (DbUpdateException)
             {
                 db.Entry(trust).State = EntityState.Detached;
-                trust = await db.TrustPlans.AsNoTracking().FirstAsync(t => t.HouseholdId == householdId);
+                trust = await db.TrustPlans.AsNoTracking()
+                    .FirstAsync(t => t.HouseholdId == householdId && t.GrantorPersonId == grantorId);
             }
         }
         return TrustPlanResponse.From(trust, household);
@@ -41,7 +50,10 @@ public class TrustController(AppDbContext db, TrustService trustService, TimePro
         var household = await LoadHousehold(householdId);
         if (household is null) return NotFound();
 
-        var trust = household.TrustPlan;
+        // A trust's identity is its grantor: upsert that person's trust, claiming
+        // any unclaimed draft (pre-multi-trust data) along the way.
+        var trust = household.TrustPlans.FirstOrDefault(t => t.GrantorPersonId == request.GrantorPersonId)
+            ?? household.TrustPlans.FirstOrDefault(t => t.GrantorPersonId == null);
         if (trust is null)
         {
             trust = new TrustPlan { Id = Guid.NewGuid(), HouseholdId = householdId };
@@ -75,10 +87,10 @@ public class TrustController(AppDbContext db, TrustService trustService, TimePro
     }
 
     [HttpPost("complete")]
-    public async Task<ActionResult<TrustPlanResponse>> Complete(Guid householdId)
+    public async Task<ActionResult<TrustPlanResponse>> Complete(Guid householdId, [FromQuery] Guid? personId)
     {
         var household = await LoadHousehold(householdId);
-        if (household?.TrustPlan is not TrustPlan trust) return NotFound();
+        if (household?.FindTrust(personId) is not TrustPlan trust) return NotFound();
 
         var errors = trustService.ValidateForCompletion(household, trust);
         if (errors.Count > 0)
@@ -94,10 +106,11 @@ public class TrustController(AppDbContext db, TrustService trustService, TimePro
     }
 
     [HttpPost("execution")]
-    public async Task<ActionResult<TrustPlanResponse>> MarkExecuted(Guid householdId, MarkDocumentExecutedRequest request)
+    public async Task<ActionResult<TrustPlanResponse>> MarkExecuted(
+        Guid householdId, MarkDocumentExecutedRequest request, [FromQuery] Guid? personId)
     {
         var household = await LoadHousehold(householdId);
-        if (household?.TrustPlan is not TrustPlan trust) return NotFound();
+        if (household?.FindTrust(personId) is not TrustPlan trust) return NotFound();
 
         if (trust.Status == DocumentStatus.Draft)
             return Problem(detail: "Finish the trust before recording its signing.", statusCode: 400, title: "Not ready to sign");
@@ -113,10 +126,10 @@ public class TrustController(AppDbContext db, TrustService trustService, TimePro
     }
 
     [HttpGet("document")]
-    public async Task<ActionResult<WillDocumentResponse>> Document(Guid householdId)
+    public async Task<ActionResult<WillDocumentResponse>> Document(Guid householdId, [FromQuery] Guid? personId)
     {
         var household = await LoadHousehold(householdId);
-        if (household?.TrustPlan is not TrustPlan trust) return NotFound();
+        if (household?.FindTrust(personId) is not TrustPlan trust) return NotFound();
         return trustService.BuildDocument(household, trust);
     }
 
@@ -124,7 +137,7 @@ public class TrustController(AppDbContext db, TrustService trustService, TimePro
         db.Households
             .Include(h => h.People)
             .Include(h => h.Assets)
-            .Include(h => h.TrustPlan)
+            .Include(h => h.TrustPlans)
             .AsSplitQuery()
             .FirstOrDefaultAsync(h => h.Id == householdId);
 }

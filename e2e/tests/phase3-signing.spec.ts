@@ -21,7 +21,7 @@ async function completeAWill(page: Page) {
   await page.getByRole('radio', { name: /everything to my spouse/i }).check()
   await page.getByRole('button', { name: /continue/i }).click()
   await page.getByRole('button', { name: /finish my will/i }).click()
-  await expect(page).toHaveURL(/\/will\/document$/)
+  await expect(page).toHaveURL(/\/will\/document/)
 }
 
 test.describe('Phase 3: done means signed', () => {

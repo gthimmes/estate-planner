@@ -12,18 +12,21 @@ namespace EstatePlanner.Api.Controllers;
 public class WillController(AppDbContext db, WillService willService, TimeProvider time) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<WillPlanResponse>> Get(Guid householdId)
+    public async Task<ActionResult<WillPlanResponse>> Get(Guid householdId, [FromQuery] Guid? personId)
     {
         var household = await LoadHousehold(householdId);
         if (household is null) return NotFound();
+        if (personId is Guid pid && household.People.All(p => p.Id != pid)) return NotFound();
 
-        var will = household.WillPlan;
+        var will = household.FindWill(personId);
         if (will is null)
         {
+            var testatorId = personId ?? household.SelfPerson?.Id;
             will = new WillPlan
             {
                 Id = Guid.NewGuid(),
                 HouseholdId = householdId,
+                TestatorPersonId = testatorId,
                 UpdatedAt = time.GetUtcNow(),
             };
             db.WillPlans.Add(will);
@@ -35,7 +38,8 @@ public class WillController(AppDbContext db, WillService willService, TimeProvid
             {
                 // Concurrent first-access already created the draft; return that one.
                 db.Entry(will).State = EntityState.Detached;
-                will = await db.WillPlans.AsNoTracking().FirstAsync(w => w.HouseholdId == householdId);
+                will = await db.WillPlans.AsNoTracking()
+                    .FirstAsync(w => w.HouseholdId == householdId && w.TestatorPersonId == testatorId);
             }
         }
         return WillPlanResponse.From(will, StateExecutionRules.IsSupported(household.StateCode));
@@ -47,7 +51,10 @@ public class WillController(AppDbContext db, WillService willService, TimeProvid
         var household = await LoadHousehold(householdId);
         if (household is null) return NotFound();
 
-        var will = household.WillPlan;
+        // A will's identity is its testator: upsert that person's will, claiming
+        // any unclaimed draft (pre-multi-will data) along the way.
+        var will = household.WillPlans.FirstOrDefault(w => w.TestatorPersonId == request.TestatorPersonId)
+            ?? household.WillPlans.FirstOrDefault(w => w.TestatorPersonId == null);
         if (will is null)
         {
             will = new WillPlan { Id = Guid.NewGuid(), HouseholdId = householdId };
@@ -95,10 +102,10 @@ public class WillController(AppDbContext db, WillService willService, TimeProvid
     }
 
     [HttpPost("complete")]
-    public async Task<ActionResult<WillPlanResponse>> Complete(Guid householdId)
+    public async Task<ActionResult<WillPlanResponse>> Complete(Guid householdId, [FromQuery] Guid? personId)
     {
         var household = await LoadHousehold(householdId);
-        if (household?.WillPlan is not WillPlan will) return NotFound();
+        if (household?.FindWill(personId) is not WillPlan will) return NotFound();
 
         var errors = willService.ValidateForCompletion(household, will);
         if (errors.Count > 0)
@@ -114,10 +121,11 @@ public class WillController(AppDbContext db, WillService willService, TimeProvid
     }
 
     [HttpPost("execution")]
-    public async Task<ActionResult<WillPlanResponse>> MarkExecuted(Guid householdId, MarkExecutedRequest request)
+    public async Task<ActionResult<WillPlanResponse>> MarkExecuted(
+        Guid householdId, MarkExecutedRequest request, [FromQuery] Guid? personId)
     {
         var household = await LoadHousehold(householdId);
-        if (household?.WillPlan is not WillPlan will) return NotFound();
+        if (household?.FindWill(personId) is not WillPlan will) return NotFound();
 
         if (will.Status == WillStatus.Draft)
             return Problem(detail: "Finish the will before recording its signing.", statusCode: 400, title: "Not ready to sign");
@@ -141,10 +149,10 @@ public class WillController(AppDbContext db, WillService willService, TimeProvid
     }
 
     [HttpGet("document")]
-    public async Task<ActionResult<WillDocumentResponse>> Document(Guid householdId)
+    public async Task<ActionResult<WillDocumentResponse>> Document(Guid householdId, [FromQuery] Guid? personId)
     {
         var household = await LoadHousehold(householdId);
-        if (household?.WillPlan is not WillPlan will) return NotFound();
+        if (household?.FindWill(personId) is not WillPlan will) return NotFound();
         if (!StateExecutionRules.IsSupported(household.StateCode))
             return Problem(detail: "Louisiana wills are not supported.", statusCode: 400, title: "Unsupported state");
         return willService.BuildDocument(household, will);
@@ -154,7 +162,7 @@ public class WillController(AppDbContext db, WillService willService, TimeProvid
         db.Households
             .Include(h => h.People)
             .Include(h => h.Assets)
-            .Include(h => h.WillPlan)
+            .Include(h => h.WillPlans)
             .AsSplitQuery()
             .FirstOrDefaultAsync(h => h.Id == householdId);
 }

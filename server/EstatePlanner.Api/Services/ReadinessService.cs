@@ -25,6 +25,7 @@ public class ReadinessService(TimeProvider time)
         var designationsHandled = designatable.Count > 0 &&
             designatable.All(a => a.BeneficiaryStatus is BeneficiaryStatus.Designated or BeneficiaryStatus.NotApplicable);
 
+        var willItems = WillItems(household, hasMinorChildren);
         var checklist = new List<ReadinessItem>
         {
             new("household", "Tell us about your household",
@@ -47,25 +48,8 @@ public class ReadinessService(TimeProvider time)
                     : designationsHandled
                         ? "All accounts that can carry a beneficiary are handled."
                         : $"{designatable.Count(a => a.BeneficiaryStatus is BeneficiaryStatus.None or BeneficiaryStatus.NeedsReview)} of {designatable.Count} accounts need attention. Designations override your will."),
-            new("will", "Create your will",
-                household.WillPlan?.Status is WillStatus.Complete or WillStatus.Executed,
-                household.WillPlan?.Status switch
-                {
-                    WillStatus.Complete or WillStatus.Executed => "Drafted. A changed will must be signed again.",
-                    WillStatus.Draft => "You've started — pick up where you left off.",
-                    _ => hasMinorChildren
-                        ? "A guided, plain-language interview. You have minor children, so your will should also name a guardian."
-                        : "A guided, plain-language interview.",
-                }),
-            new("sign", "Sign your will to make it official",
-                household.WillPlan?.Status == WillStatus.Executed,
-                household.WillPlan?.Status switch
-                {
-                    WillStatus.Executed =>
-                        $"Signed on {household.WillPlan.ExecutedOn:MMMM d, yyyy}. Original stored: {household.WillPlan.StorageLocation}.",
-                    WillStatus.Complete => "Print it and sign with witnesses — we'll walk you through your state's rules.",
-                    _ => "An unsigned will has no legal effect. Finish drafting first.",
-                }),
+            willItems[0],
+            willItems[1],
             DocumentItem(household, EstateDocumentType.FinancialPoa,
                 "poa", "Financial power of attorney",
                 "Names someone to handle finances if you can't."),
@@ -91,7 +75,7 @@ public class ReadinessService(TimeProvider time)
 
     private static ReadinessItem TrustItem(Household household)
     {
-        var trust = household.TrustPlan;
+        var trust = household.FindTrust(null);
         var fundable = household.Assets.Where(a => !a.IsDebt).ToList();
         // Only assets that would actually hit probate need retitling; designated
         // accounts (401(k)s, life insurance) already pass outside the will.
@@ -109,10 +93,38 @@ public class ReadinessService(TimeProvider time)
             });
     }
 
+    /// <summary>The readiness score tracks the plan owner's (Self's) documents.</summary>
+    private static ReadinessItem[] WillItems(Household household, bool hasMinorChildren)
+    {
+        var will = household.FindWill(null);
+        return
+        [
+            new("will", "Create your will",
+                will?.Status is WillStatus.Complete or WillStatus.Executed,
+                will?.Status switch
+                {
+                    WillStatus.Complete or WillStatus.Executed => "Drafted. A changed will must be signed again.",
+                    WillStatus.Draft => "You've started — pick up where you left off.",
+                    _ => hasMinorChildren
+                        ? "A guided, plain-language interview. You have minor children, so your will should also name a guardian."
+                        : "A guided, plain-language interview.",
+                }),
+            new("sign", "Sign your will to make it official",
+                will?.Status == WillStatus.Executed,
+                will?.Status switch
+                {
+                    WillStatus.Executed =>
+                        $"Signed on {will.ExecutedOn:MMMM d, yyyy}. Original stored: {will.StorageLocation}.",
+                    WillStatus.Complete => "Print it and sign with witnesses — we'll walk you through your state's rules.",
+                    _ => "An unsigned will has no legal effect. Finish drafting first.",
+                }),
+        ];
+    }
+
     private static ReadinessItem DocumentItem(
         Household household, EstateDocumentType type, string key, string label, string pitch)
     {
-        var doc = household.Documents.FirstOrDefault(d => d.Type == type);
+        var doc = household.FindDocument(type, null);
         return new ReadinessItem(key, label,
             doc?.Status == DocumentStatus.Executed,
             doc?.Status switch

@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import { ExecutionInstructions, LegalDocumentView } from '../components/LegalDocumentView'
 import type { WillDocument as WillDocumentData, WillPlan } from '../types'
 
 function SigningForm({
   householdId,
+  personId,
   onExecuted,
 }: {
   householdId: string
+  personId: string | null
   onExecuted: (will: WillPlan) => void
 }) {
   const [executedOn, setExecutedOn] = useState('')
@@ -23,12 +25,11 @@ function SigningForm({
     setError(null)
     setSaving(true)
     try {
-      const will = await api.markWillExecuted(householdId, {
-        executedOn,
-        witness1Name,
-        witness2Name,
-        storageLocation,
-      })
+      const will = await api.markWillExecuted(
+        householdId,
+        { executedOn, witness1Name, witness2Name, storageLocation },
+        personId,
+      )
       onExecuted(will)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not record signing')
@@ -78,19 +79,21 @@ function SigningForm({
 }
 
 export function WillDocument({ householdId }: { householdId: string }) {
+  const [searchParams] = useSearchParams()
+  const personId = searchParams.get('personId')
   const [doc, setDoc] = useState<WillDocumentData | null>(null)
   const [will, setWill] = useState<WillPlan | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(
     () =>
-      Promise.all([api.getWillDocument(householdId), api.getWill(householdId)])
+      Promise.all([api.getWillDocument(householdId, personId), api.getWill(householdId, personId)])
         .then(([d, w]) => {
           setDoc(d)
           setWill(w)
         })
         .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load')),
-    [householdId],
+    [householdId, personId],
   )
 
   useEffect(() => {
@@ -151,6 +154,7 @@ export function WillDocument({ householdId }: { householdId: string }) {
           </p>
           <SigningForm
             householdId={householdId}
+            personId={personId}
             onExecuted={(w) => {
               setWill(w)
               void load()
