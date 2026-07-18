@@ -166,6 +166,13 @@ export function EstateDocumentPage({
         {render && (
           <div className="doc-actions">
             <button onClick={() => window.print()}>Print</button>
+            <a
+              className="button-link"
+              href={`/api/households/${householdId}/documents/${type}/document/pdf${form.principalPersonId ? `?personId=${form.principalPersonId}` : ''}`}
+              download
+            >
+              Download PDF
+            </a>
           </div>
         )}
       </header>

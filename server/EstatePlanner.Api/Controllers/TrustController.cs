@@ -9,8 +9,17 @@ namespace EstatePlanner.Api.Controllers;
 
 [ApiController]
 [Route("api/households/{householdId:guid}/trust")]
-public class TrustController(AppDbContext db, TrustService trustService, TimeProvider time) : ControllerBase
+public class TrustController(AppDbContext db, TrustService trustService, PdfService pdf, TimeProvider time) : ControllerBase
 {
+    [HttpGet("document/pdf")]
+    public async Task<IActionResult> DocumentPdf(Guid householdId, [FromQuery] Guid? personId)
+    {
+        var household = await LoadHousehold(householdId);
+        if (household?.FindTrust(personId) is not TrustPlan trust) return NotFound();
+        var document = trustService.BuildDocument(household, trust);
+        return File(pdf.Render(document), "application/pdf", $"{document.Title}.pdf");
+    }
+
     [HttpGet]
     public async Task<ActionResult<TrustPlanResponse>> Get(Guid householdId, [FromQuery] Guid? personId)
     {

@@ -428,6 +428,17 @@ tr.debt-row td {
   font-weight: 500;
 }
 
+.button-link {
+  display: inline-block;
+  font-weight: 600;
+  background: var(--surface);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 0.55rem 1.1rem;
+  text-decoration: none;
+}
+
 .person-tabs button.active {
   background: var(--accent);
   border-color: var(--accent);

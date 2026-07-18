@@ -9,8 +9,19 @@ namespace EstatePlanner.Api.Controllers;
 
 [ApiController]
 [Route("api/households/{householdId:guid}/will")]
-public class WillController(AppDbContext db, WillService willService, TimeProvider time) : ControllerBase
+public class WillController(AppDbContext db, WillService willService, PdfService pdf, TimeProvider time) : ControllerBase
 {
+    [HttpGet("document/pdf")]
+    public async Task<IActionResult> DocumentPdf(Guid householdId, [FromQuery] Guid? personId)
+    {
+        var household = await LoadHousehold(householdId);
+        if (household?.FindWill(personId) is not WillPlan will) return NotFound();
+        if (!StateExecutionRules.IsSupported(household.StateCode))
+            return Problem(detail: "Louisiana wills are not supported.", statusCode: 400, title: "Unsupported state");
+        var document = willService.BuildDocument(household, will);
+        return File(pdf.Render(document), "application/pdf", $"{document.Title}.pdf");
+    }
+
     [HttpGet]
     public async Task<ActionResult<WillPlanResponse>> Get(Guid householdId, [FromQuery] Guid? personId)
     {

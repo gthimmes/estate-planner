@@ -144,6 +144,14 @@ public class WillApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         Assert.Contains(document.BeneficiaryConflictNotes, n => n.Contains("Fidelity 401(k)"));
         Assert.Contains("not legal advice", document.Disclosure);
 
+        // The PDF endpoint produces a real PDF
+        var pdfResponse = await _client.GetAsync($"/api/households/{householdId}/will/document/pdf");
+        pdfResponse.EnsureSuccessStatusCode();
+        Assert.Equal("application/pdf", pdfResponse.Content.Headers.ContentType?.MediaType);
+        var pdfBytes = await pdfResponse.Content.ReadAsByteArrayAsync();
+        Assert.True(pdfBytes.Length > 1000);
+        Assert.Equal("%PDF", System.Text.Encoding.ASCII.GetString(pdfBytes, 0, 4));
+
         // Dashboard readiness counts the drafted will but not the unsigned one (5 of 9 = 56%)
         var dashboard = await _client.GetFromJsonAsync<DashboardResponse>($"/api/households/{householdId}/dashboard", Json);
         Assert.Contains(dashboard!.Checklist, i => i.Key == "will" && i.Done);

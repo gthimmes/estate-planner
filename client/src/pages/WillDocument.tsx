@@ -131,6 +131,13 @@ export function WillDocument({ householdId }: { householdId: string }) {
         </div>
         <div className="doc-actions">
           <button onClick={() => window.print()}>Print</button>
+          <a
+            className="button-link"
+            href={`/api/households/${householdId}/will/document/pdf${personId ? `?personId=${personId}` : ''}`}
+            download
+          >
+            Download PDF
+          </a>
           <Link to="/will">Edit the will</Link>
         </div>
       </header>

@@ -9,8 +9,20 @@ namespace EstatePlanner.Api.Controllers;
 
 [ApiController]
 [Route("api/households/{householdId:guid}/documents/{type}")]
-public class EstateDocumentsController(AppDbContext db, EstateDocumentService documents, TimeProvider time) : ControllerBase
+public class EstateDocumentsController(
+    AppDbContext db, EstateDocumentService documents, PdfService pdf, TimeProvider time) : ControllerBase
 {
+    [HttpGet("document/pdf")]
+    public async Task<IActionResult> DocumentPdf(
+        Guid householdId, EstateDocumentType type, [FromQuery] Guid? personId)
+    {
+        var household = await LoadHousehold(householdId);
+        var doc = household?.FindDocument(type, personId);
+        if (household is null || doc is null) return NotFound();
+        var document = documents.BuildDocument(household, doc);
+        return File(pdf.Render(document), "application/pdf", $"{document.Title}.pdf");
+    }
+
     [HttpGet]
     public async Task<ActionResult<EstateDocumentResponse>> Get(
         Guid householdId, EstateDocumentType type, [FromQuery] Guid? personId)

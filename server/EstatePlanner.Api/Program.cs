@@ -16,6 +16,7 @@ builder.Services.AddSingleton<ReadinessService>();
 builder.Services.AddSingleton<WillService>();
 builder.Services.AddSingleton<EstateDocumentService>();
 builder.Services.AddSingleton<TrustService>();
+builder.Services.AddSingleton<PdfService>();
 
 builder.Services.AddCors(options =>
 {

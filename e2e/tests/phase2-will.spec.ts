@@ -74,6 +74,12 @@ test.describe('Phase 2: the will', () => {
     await expect(page.getByText(/notarization does NOT replace witnesses/i)).toBeVisible()
     await expect(page.getByRole('button', { name: /print/i })).toBeVisible()
 
+    // Download a real PDF of the will
+    const downloadPromise = page.waitForEvent('download')
+    await page.getByRole('link', { name: /download pdf/i }).click()
+    const download = await downloadPromise
+    expect(download.suggestedFilename()).toContain('Last Will and Testament of Taylor Testator')
+
     // --- Dashboard reflects the drafted (but unsigned) will ---
     await page.getByRole('navigation').getByRole('link', { name: 'Dashboard' }).click()
     await expect(page.getByText(/a changed will must be signed again/i)).toBeVisible()

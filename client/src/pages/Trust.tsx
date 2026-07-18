@@ -165,6 +165,13 @@ export function Trust({ householdId }: { householdId: string }) {
         {render && (
           <div className="doc-actions">
             <button onClick={() => window.print()}>Print</button>
+            <a
+              className="button-link"
+              href={`/api/households/${householdId}/trust/document/pdf${form.grantorPersonId ? `?personId=${form.grantorPersonId}` : ''}`}
+              download
+            >
+              Download PDF
+            </a>
           </div>
         )}
       </header>
