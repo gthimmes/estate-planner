@@ -119,6 +119,7 @@ public class TrustController(AppDbContext db, TrustService trustService, TimePro
 
         trust.Status = DocumentStatus.Executed;
         trust.ExecutedOn = request.ExecutedOn;
+        trust.ExecutedStateCode = household.StateCode;
         trust.ExecutionNotes = request.ExecutionNotes?.Trim();
         trust.UpdatedAt = time.GetUtcNow();
         await db.SaveChangesAsync();

@@ -60,6 +60,8 @@ test.describe('Phase 3: done means signed', () => {
     await page.getByRole('navigation').getByRole('link', { name: 'Your will' }).click()
     await expect(page.getByText(/this will has been signed/i)).toBeVisible()
     await page.getByRole('button', { name: /continue/i }).click() // save step 1 → reopens draft
+    // the executor step only renders after the save round-trip completes
+    await expect(page.getByRole('heading', { name: /who settles your estate/i })).toBeVisible()
     await page.getByRole('navigation').getByRole('link', { name: 'Dashboard' }).click()
     await expect(page.getByText(/an unsigned will has no legal effect/i)).toBeVisible()
     // will reopened to draft: household + family = 2/9 → 22%

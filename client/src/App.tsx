@@ -7,6 +7,7 @@ import { Welcome } from './pages/Welcome'
 import { Will } from './pages/Will'
 import { WillDocument } from './pages/WillDocument'
 import { EstateDocumentPage } from './pages/EstateDocumentPage'
+import { Settings } from './pages/Settings'
 import { Trust } from './pages/Trust'
 import { Vault } from './pages/Vault'
 
@@ -40,6 +41,7 @@ function App() {
         <NavLink to="/healthcare">Healthcare wishes</NavLink>
         <NavLink to="/trust">Living trust</NavLink>
         <NavLink to="/vault">Vault</NavLink>
+        <NavLink to="/settings">Life changes</NavLink>
         <p className="disclosure">
           Self-help forms and information — not legal advice, and not a substitute for an attorney.
         </p>
@@ -63,6 +65,7 @@ function App() {
           />
           <Route path="/trust" element={<Trust householdId={householdId!} />} />
           <Route path="/vault" element={<Vault householdId={householdId!} />} />
+          <Route path="/settings" element={<Settings householdId={householdId!} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

@@ -70,7 +70,36 @@ public class ReadinessService(TimeProvider time)
             HasMinorChildren: hasMinorChildren,
             ReadinessScore: score,
             Checklist: checklist,
-            ProbateExposedValue: assets.Where(a => a.ProbateStatus == ProbateStatus.LikelyProbate).Sum(a => a.EstimatedValue));
+            ProbateExposedValue: assets.Where(a => a.ProbateStatus == ProbateStatus.LikelyProbate).Sum(a => a.EstimatedValue),
+            StaleStateDocuments: StaleStateDocuments(household));
+    }
+
+    /// <summary>Executed documents signed under a different state's law than where the
+    /// household now lives — a move is a review trigger, not an invalidation.</summary>
+    private static List<string> StaleStateDocuments(Household household)
+    {
+        string PersonSuffix(Guid? personId) =>
+            household.People.FirstOrDefault(p => p.Id == personId) is Person p
+                ? $" ({p.FirstName} {p.LastName})"
+                : string.Empty;
+
+        var stale = new List<string>();
+        bool Moved(string? executedState) =>
+            executedState is not null &&
+            !string.Equals(executedState, household.StateCode, StringComparison.OrdinalIgnoreCase);
+
+        stale.AddRange(household.WillPlans
+            .Where(w => w.Status == WillStatus.Executed && Moved(w.ExecutedStateCode))
+            .Select(w => $"Will{PersonSuffix(w.TestatorPersonId)} — signed under {w.ExecutedStateCode} law"));
+        stale.AddRange(household.TrustPlans
+            .Where(t => t.Status == DocumentStatus.Executed && Moved(t.ExecutedStateCode))
+            .Select(t => $"Living trust{PersonSuffix(t.GrantorPersonId)} — signed under {t.ExecutedStateCode} law"));
+        stale.AddRange(household.Documents
+            .Where(d => d.Status == DocumentStatus.Executed && Moved(d.ExecutedStateCode))
+            .Select(d =>
+                (d.Type == EstateDocumentType.FinancialPoa ? "Power of attorney" : "Healthcare directive") +
+                $"{PersonSuffix(d.PrincipalPersonId)} — signed under {d.ExecutedStateCode} law"));
+        return stale;
     }
 
     private static ReadinessItem TrustItem(Household household)

@@ -45,6 +45,7 @@ public class EstateDocument
 
     public DocumentStatus Status { get; set; }
     public DateOnly? ExecutedOn { get; set; }
+    public string? ExecutedStateCode { get; set; }
     public string? ExecutionNotes { get; set; }
 
     public DateTimeOffset UpdatedAt { get; set; }
@@ -54,6 +55,7 @@ public class EstateDocument
     public void ClearExecution()
     {
         ExecutedOn = null;
+        ExecutedStateCode = null;
         ExecutionNotes = null;
     }
 }

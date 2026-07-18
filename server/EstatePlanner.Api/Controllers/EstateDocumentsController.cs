@@ -126,6 +126,7 @@ public class EstateDocumentsController(AppDbContext db, EstateDocumentService do
 
         doc.Status = DocumentStatus.Executed;
         doc.ExecutedOn = request.ExecutedOn;
+        doc.ExecutedStateCode = household!.StateCode;
         doc.ExecutionNotes = request.ExecutionNotes?.Trim();
         doc.UpdatedAt = time.GetUtcNow();
         await db.SaveChangesAsync();

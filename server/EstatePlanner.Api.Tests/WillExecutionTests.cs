@@ -86,6 +86,28 @@ public class WillExecutionTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    public async Task Moving_states_flags_executed_documents_for_review()
+    {
+        var (householdId, _, _) = await SetUpCompletedWill();
+        await _client.PostAsJsonAsync($"/api/households/{householdId}/will/execution", ValidExecution(), Json);
+
+        // No move yet: nothing is stale
+        var dashboard = await _client.GetFromJsonAsync<DashboardResponse>(
+            $"/api/households/{householdId}/dashboard", Json);
+        Assert.Empty(dashboard!.StaleStateDocuments ?? []);
+
+        // The family moves from TX to CA
+        var update = await _client.PutAsJsonAsync($"/api/households/{householdId}",
+            new UpdateHouseholdRequest("Signing Family", "CA", MaritalStatus.Married), Json);
+        update.EnsureSuccessStatusCode();
+
+        dashboard = await _client.GetFromJsonAsync<DashboardResponse>(
+            $"/api/households/{householdId}/dashboard", Json);
+        var stale = Assert.Single(dashboard!.StaleStateDocuments!);
+        Assert.Contains("signed under TX law", stale);
+    }
+
+    [Fact]
     public async Task Executed_will_counts_in_readiness_and_editing_revokes_execution()
     {
         var (householdId, self, spouse) = await SetUpCompletedWill();

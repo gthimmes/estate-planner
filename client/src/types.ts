@@ -69,6 +69,7 @@ export interface Dashboard {
   readinessScore: number
   checklist: ReadinessItem[]
   probateExposedValue: number
+  staleStateDocuments: string[] | null
 }
 
 export type WillStatus = 'Draft' | 'Complete' | 'Executed'

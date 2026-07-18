@@ -140,6 +140,7 @@ public class WillController(AppDbContext db, WillService willService, TimeProvid
 
         will.Status = WillStatus.Executed;
         will.ExecutedOn = request.ExecutedOn;
+        will.ExecutedStateCode = household.StateCode;
         will.Witness1Name = request.Witness1Name.Trim();
         will.Witness2Name = request.Witness2Name.Trim();
         will.StorageLocation = request.StorageLocation.Trim();

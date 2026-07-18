@@ -31,6 +31,8 @@ public class WillPlan
     public List<ResiduaryShare> ResiduaryShares { get; set; } = [];
     public WillStatus Status { get; set; }
     public DateOnly? ExecutedOn { get; set; }
+    /// <summary>State law the document was signed under; a later move flags it for review.</summary>
+    public string? ExecutedStateCode { get; set; }
     public string? Witness1Name { get; set; }
     public string? Witness2Name { get; set; }
     /// <summary>Where the signed original lives — "where's the will?" is the classic probate problem.</summary>
@@ -40,6 +42,7 @@ public class WillPlan
     public void ClearExecution()
     {
         ExecutedOn = null;
+        ExecutedStateCode = null;
         Witness1Name = null;
         Witness2Name = null;
         StorageLocation = null;

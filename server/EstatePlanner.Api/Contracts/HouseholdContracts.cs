@@ -60,4 +60,5 @@ public record DashboardResponse(
     bool HasMinorChildren,
     int ReadinessScore,
     IReadOnlyList<ReadinessItem> Checklist,
-    decimal ProbateExposedValue = 0m);
+    decimal ProbateExposedValue = 0m,
+    IReadOnlyList<string>? StaleStateDocuments = null);

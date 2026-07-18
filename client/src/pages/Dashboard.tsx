@@ -37,9 +37,22 @@ export function Dashboard({ householdId }: { householdId: string }) {
   if (!dashboard || !household) return <p className="loading">Loading your plan…</p>
 
   const nextStep = dashboard.checklist.find((i) => !i.done)
+  const stale = dashboard.staleStateDocuments ?? []
 
   return (
     <div className="dashboard">
+      {stale.length > 0 && (
+        <aside className="banner warning" role="note">
+          <strong>You've moved — these documents were signed under another state's law:</strong>
+          <ul>
+            {stale.map((d) => (
+              <li key={d}>{d}</li>
+            ))}
+          </ul>
+          Rules for witnesses and notarization differ by state. Review each document and sign a
+          fresh copy under {household.stateCode} law.
+        </aside>
+      )}
       <header className="page-header">
         <div>
           <h1>{household.name}</h1>
