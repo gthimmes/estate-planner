@@ -7,10 +7,18 @@ const EMPTY_FORM = { firstName: '', lastName: '', role: 'Spouse' as PersonRole, 
 export function Family({ householdId }: { householdId: string }) {
   const [people, setPeople] = useState<Person[]>([])
   const [form, setForm] = useState(EMPTY_FORM)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState(EMPTY_FORM)
   const [error, setError] = useState<string | null>(null)
 
+  const hasSelf = people.some((p) => p.role === 'Self')
+
   const reload = useCallback(
-    () => api.listPeople(householdId).then(setPeople).catch(() => setError('Failed to load family')),
+    () =>
+      api
+        .listPeople(householdId)
+        .then(setPeople)
+        .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load family')),
     [householdId],
   )
 
@@ -35,22 +43,61 @@ export function Family({ householdId }: { householdId: string }) {
     }
   }
 
+  function startEdit(person: Person) {
+    setEditingId(person.id)
+    setEditForm({
+      firstName: person.firstName,
+      lastName: person.lastName,
+      role: person.role,
+      dateOfBirth: person.dateOfBirth ?? '',
+    })
+  }
+
+  async function saveEdit(personId: string) {
+    setError(null)
+    try {
+      await api.updatePerson(householdId, personId, {
+        firstName: editForm.firstName,
+        lastName: editForm.lastName,
+        role: editForm.role,
+        dateOfBirth: editForm.dateOfBirth || null,
+      })
+      setEditingId(null)
+      await reload()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save changes')
+    }
+  }
+
   async function remove(personId: string) {
-    await api.deletePerson(householdId, personId)
-    await reload()
+    setError(null)
+    try {
+      await api.deletePerson(householdId, personId)
+      await reload()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not remove person')
+    }
   }
 
   return (
     <div>
       <header className="page-header">
         <div>
-          <h1>Your family</h1>
+          <h1>You &amp; your family</h1>
           <p className="subtitle">
             The people your plan protects — and the candidates for roles like guardian, executor,
             and beneficiary.
           </p>
         </div>
       </header>
+
+      {!hasSelf && (
+        <aside className="banner warning" role="note">
+          <strong>You're not in your own plan yet.</strong> This is <em>your</em> estate plan — add
+          yourself below (choose "Me") so your will, power of attorney, and other documents can be
+          made for you.
+        </aside>
+      )}
 
       <section className="card">
         <h2>Add someone</h2>
@@ -77,11 +124,13 @@ export function Family({ householdId }: { householdId: string }) {
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value as PersonRole })}
             >
-              {Object.entries(PERSON_ROLE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
+              {Object.entries(PERSON_ROLE_LABELS)
+                .filter(([value]) => value !== 'Self' || !hasSelf)
+                .map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
             </select>
           </label>
           <label>
@@ -116,20 +165,76 @@ export function Family({ householdId }: { householdId: string }) {
               </tr>
             </thead>
             <tbody>
-              {people.map((p) => (
-                <tr key={p.id}>
-                  <td>
-                    {p.firstName} {p.lastName}
-                  </td>
-                  <td>{PERSON_ROLE_LABELS[p.role]}</td>
-                  <td>{p.dateOfBirth ?? '—'}</td>
-                  <td>
-                    <button className="link danger" onClick={() => remove(p.id)}>
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {people.map((p) =>
+                editingId === p.id ? (
+                  <tr key={p.id} className="editing-row">
+                    <td>
+                      <div className="edit-name">
+                        <input
+                          aria-label="Edit first name"
+                          value={editForm.firstName}
+                          onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
+                        />
+                        <input
+                          aria-label="Edit last name"
+                          value={editForm.lastName}
+                          onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
+                        />
+                      </div>
+                    </td>
+                    <td>
+                      <select
+                        aria-label="Edit relationship"
+                        value={editForm.role}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, role: e.target.value as PersonRole })
+                        }
+                      >
+                        {Object.entries(PERSON_ROLE_LABELS)
+                          .filter(([value]) => value !== 'Self' || !hasSelf || p.role === 'Self')
+                          .map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                      </select>
+                    </td>
+                    <td>
+                      <input
+                        aria-label="Edit date of birth"
+                        type="date"
+                        value={editForm.dateOfBirth}
+                        onChange={(e) => setEditForm({ ...editForm, dateOfBirth: e.target.value })}
+                      />
+                    </td>
+                    <td className="row-actions">
+                      <button className="link" onClick={() => saveEdit(p.id)}>
+                        Save
+                      </button>
+                      <button className="link" onClick={() => setEditingId(null)}>
+                        Cancel
+                      </button>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={p.id}>
+                    <td>
+                      {p.firstName} {p.lastName}
+                      {p.role === 'Self' && <span className="badge designated me-badge">You</span>}
+                    </td>
+                    <td>{PERSON_ROLE_LABELS[p.role]}</td>
+                    <td>{p.dateOfBirth ?? '—'}</td>
+                    <td className="row-actions">
+                      <button className="link" onClick={() => startEdit(p)}>
+                        Edit
+                      </button>
+                      <button className="link danger" onClick={() => remove(p.id)}>
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ),
+              )}
             </tbody>
           </table>
         )}

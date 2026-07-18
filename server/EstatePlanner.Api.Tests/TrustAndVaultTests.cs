@@ -65,7 +65,7 @@ public class TrustAndVaultTests(ApiFixture fixture) : IClassFixture<ApiFixture>
             $"/api/households/{householdId}/dashboard", Json);
         var trustItem = dashboard!.Checklist.Single(i => i.Key == "trust");
         Assert.True(trustItem.Done);
-        Assert.Contains("aren't retitled", trustItem.Detail);
+        Assert.Contains("retitled", trustItem.Detail); // only the house needs funding; the IRA passes by designation
 
         // Fund the house: probate exposure drops to zero
         await _client.PutAsJsonAsync($"/api/households/{householdId}/assets/{house.Id}", new AssetRequest(

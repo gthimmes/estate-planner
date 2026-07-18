@@ -1,10 +1,14 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { api, setCurrentHouseholdId } from '../api'
+import { Link, useNavigate } from 'react-router-dom'
+import { api, getCurrentHouseholdId, setCurrentHouseholdId } from '../api'
 import { MARITAL_STATUS_LABELS, US_STATES, type MaritalStatus } from '../types'
 
 export function Welcome() {
   const navigate = useNavigate()
+  const existingPlan = getCurrentHouseholdId()
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [dateOfBirth, setDateOfBirth] = useState('')
   const [name, setName] = useState('')
   const [stateCode, setStateCode] = useState('')
   const [maritalStatus, setMaritalStatus] = useState<MaritalStatus>('Single')
@@ -16,7 +20,17 @@ export function Welcome() {
     setError(null)
     setSaving(true)
     try {
-      const household = await api.createHousehold({ name, stateCode, maritalStatus })
+      const household = await api.createHousehold({
+        name: name.trim() || `${firstName}'s estate plan`,
+        stateCode,
+        maritalStatus,
+        self: {
+          firstName,
+          lastName,
+          role: 'Self',
+          dateOfBirth: dateOfBirth || null,
+        },
+      })
       setCurrentHouseholdId(household.id)
       navigate('/')
     } catch (err) {
@@ -31,19 +45,48 @@ export function Welcome() {
       <section className="welcome-hero">
         <h1>Plan for the people you love.</h1>
         <p>
-          Most people put this off for years. You just need a few minutes to start: tell us who's in
-          your life and what you have, and we'll show you exactly what your estate plan needs —
-          step by step, in plain language.
+          Most people put this off for years. You just need a few minutes to start: tell us who you
+          are and what you have, and we'll show you exactly what your estate plan needs — step by
+          step, in plain language.
         </p>
+        {existingPlan && (
+          <aside className="banner warning" role="note">
+            You already have a plan on this device. <Link to="/">Continue where you left off</Link>{' '}
+            — starting over below creates a separate, brand-new plan.
+          </aside>
+        )}
       </section>
-      <form onSubmit={onSubmit} className="card welcome-form" aria-label="Create your household">
-        <h2>Let's set up your household</h2>
+      <form onSubmit={onSubmit} className="card welcome-form" aria-label="Start your plan">
+        <h2>First, about you</h2>
+        <p className="hint">
+          This is your plan — your will, your power of attorney, your wishes. We start with you.
+        </p>
+        <div className="field-row">
+          <label>
+            Your first name
+            <input
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              autoComplete="given-name"
+              required
+            />
+          </label>
+          <label>
+            Your last name
+            <input
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              autoComplete="family-name"
+              required
+            />
+          </label>
+        </div>
         <label>
-          What should we call your plan?
+          Your date of birth
           <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. The Rivera Family"
+            type="date"
+            value={dateOfBirth}
+            onChange={(e) => setDateOfBirth(e.target.value)}
             required
           />
         </label>
@@ -73,6 +116,14 @@ export function Welcome() {
               </option>
             ))}
           </select>
+        </label>
+        <label>
+          Name your plan (optional)
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={firstName ? `${firstName}'s estate plan` : 'e.g. The Rivera Family'}
+          />
         </label>
         {error && (
           <p role="alert" className="error">

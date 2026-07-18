@@ -50,13 +50,13 @@ export function EstateDocumentPage({
 
   const copy = COPY[type]
 
-  const applyDoc = useCallback((doc: EstateDocument) => {
+  const applyDoc = useCallback((doc: EstateDocument, selfId: string | null) => {
     setStatus(doc.status)
     setExecutedOn(doc.executedOn)
     setForm(
       (prev) =>
         prev ?? {
-          principalPersonId: doc.principalPersonId,
+          principalPersonId: doc.principalPersonId ?? selfId,
           agentPersonId: doc.agentPersonId,
           backupAgentPersonId: doc.backupAgentPersonId,
           effectiveImmediately: doc.effectiveImmediately,
@@ -71,7 +71,7 @@ export function EstateDocumentPage({
     Promise.all([api.getEstateDocument(householdId, type), api.listPeople(householdId)])
       .then(([doc, ppl]) => {
         setPeople(ppl)
-        applyDoc(doc)
+        applyDoc(doc, ppl.find((p) => p.role === 'Self')?.id ?? null)
         if (doc.status !== 'Draft') {
           void api.getEstateDocumentRender(householdId, type).then(setRender)
         }

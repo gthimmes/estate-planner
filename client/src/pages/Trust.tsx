@@ -39,7 +39,7 @@ export function Trust({ householdId }: { householdId: string }) {
         setForm(
           (prev) =>
             prev ?? {
-              grantorPersonId: trust.grantorPersonId,
+              grantorPersonId: trust.grantorPersonId ?? ppl.find((p) => p.role === 'Self')?.id ?? null,
               successorTrusteePersonId: trust.successorTrusteePersonId,
               backupTrusteePersonId: trust.backupTrusteePersonId,
               distributionStrategy: trust.distributionStrategy,

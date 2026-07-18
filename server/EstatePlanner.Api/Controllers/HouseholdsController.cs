@@ -34,6 +34,19 @@ public class HouseholdsController(AppDbContext db) : ControllerBase
             MaritalStatus = request.MaritalStatus,
             CreatedAt = DateTimeOffset.UtcNow,
         };
+        if (request.Self is PersonRequest self)
+        {
+            if (string.IsNullOrWhiteSpace(self.FirstName))
+                return ValidationProblem("Your first name is required.");
+            household.People.Add(new Person
+            {
+                Id = Guid.NewGuid(),
+                FirstName = self.FirstName.Trim(),
+                LastName = self.LastName.Trim(),
+                Role = PersonRole.Self,
+                DateOfBirth = self.DateOfBirth,
+            });
+        }
         db.Households.Add(household);
         await db.SaveChangesAsync();
         return CreatedAtAction(nameof(Get), new { id = household.Id }, HouseholdResponse.From(household));

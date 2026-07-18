@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { api, formatCurrency } from '../api'
+import { Link, useNavigate } from 'react-router-dom'
+import { api, clearCurrentHouseholdId, formatCurrency, NotFoundError } from '../api'
 import { ReadinessChecklist } from '../components/ReadinessChecklist'
 import { ScoreRing } from '../components/ScoreRing'
 import type { Dashboard as DashboardData, Household } from '../types'
 
 export function Dashboard({ householdId }: { householdId: string }) {
+  const navigate = useNavigate()
   const [dashboard, setDashboard] = useState<DashboardData | null>(null)
   const [household, setHousehold] = useState<Household | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -16,8 +17,16 @@ export function Dashboard({ householdId }: { householdId: string }) {
         setDashboard(d)
         setHousehold(h)
       })
-      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load'))
-  }, [householdId])
+      .catch((err) => {
+        if (err instanceof NotFoundError) {
+          // The stored plan no longer exists on the server — start fresh.
+          clearCurrentHouseholdId()
+          navigate('/welcome', { replace: true })
+          return
+        }
+        setError(err instanceof Error ? err.message : 'Failed to load')
+      })
+  }, [householdId, navigate])
 
   if (error)
     return (

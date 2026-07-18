@@ -36,7 +36,8 @@ export function Will({ householdId }: { householdId: string }) {
         setForm(
           (prev) =>
             prev ?? {
-              testatorPersonId: will.testatorPersonId,
+              testatorPersonId:
+                will.testatorPersonId ?? ppl.find((p) => p.role === 'Self')?.id ?? null,
               executorPersonId: will.executorPersonId,
               backupExecutorPersonId: will.backupExecutorPersonId,
               waiveExecutorBond: will.waiveExecutorBond,

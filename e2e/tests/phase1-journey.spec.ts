@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { onboard } from './helpers'
 
 test.describe('Phase 1: know your estate', () => {
   test('new user onboards, adds family and assets, and watches readiness grow', async ({ page }) => {
@@ -8,19 +9,23 @@ test.describe('Phase 1: know your estate', () => {
     await expect(page.getByRole('heading', { name: /plan for the people you love/i })).toBeVisible()
     await expect(page.getByText(/not legal advice/i)).toBeVisible()
 
-    await page.getByLabel(/what should we call your plan/i).fill('The Playwright Family')
-    await page.getByLabel(/where do you live/i).selectOption('CA')
-    await page.getByLabel(/marital status/i).selectOption('Married')
-    await page.getByRole('button', { name: /start my plan/i }).click()
+    await onboard(page, {
+      planName: 'The Playwright Family',
+      firstName: 'Pat',
+      lastName: 'Playwright',
+      dob: '1985-01-01',
+      state: 'CA',
+      maritalStatus: 'Married',
+    })
 
-    // --- Dashboard: fresh plan ---
-    await expect(page.getByRole('heading', { name: 'The Playwright Family' })).toBeVisible()
+    // --- Dashboard: fresh plan (self counts as family: 2/9 → 22%) ---
     await expect(page.getByText(/planning under CA law/i).first()).toBeVisible()
     const initialScore = page.getByRole('img', { name: /estate readiness/i })
-    await expect(initialScore).toHaveAccessibleName(/11 percent/)
+    await expect(initialScore).toHaveAccessibleName(/22 percent/)
 
     // --- Family: add a spouse and a minor child ---
     await page.getByRole('navigation').getByRole('link', { name: 'Family' }).click()
+    await expect(page.getByRole('cell', { name: 'Pat Playwright You' })).toBeVisible()
     await page.getByLabel(/first name/i).fill('Jamie')
     await page.getByLabel(/last name/i).fill('Playwright')
     await page.getByLabel(/who are they/i).selectOption('Spouse')
@@ -88,11 +93,14 @@ test.describe('Phase 1: know your estate', () => {
   test('will checklist item mentions guardianship when there are minor children', async ({
     page,
   }) => {
-    await page.goto('/welcome')
-    await page.getByLabel(/what should we call your plan/i).fill('Guardianship Check')
-    await page.getByLabel(/where do you live/i).selectOption('TX')
-    await page.getByRole('button', { name: /start my plan/i }).click()
-    await expect(page.getByRole('heading', { name: 'Guardianship Check' })).toBeVisible()
+    await onboard(page, {
+      planName: 'Guardianship Check',
+      firstName: 'Casey',
+      lastName: 'Senior',
+      dob: '1988-06-15',
+      state: 'TX',
+      maritalStatus: 'Single',
+    })
 
     await page.getByRole('navigation').getByRole('link', { name: 'Family' }).click()
     await page.getByLabel(/first name/i).fill('Casey')

@@ -93,7 +93,9 @@ public class ReadinessService(TimeProvider time)
     {
         var trust = household.TrustPlan;
         var fundable = household.Assets.Where(a => !a.IsDebt).ToList();
-        var unfunded = fundable.Count(a => !a.HeldInTrust);
+        // Only assets that would actually hit probate need retitling; designated
+        // accounts (401(k)s, life insurance) already pass outside the will.
+        var unfunded = fundable.Count(a => a.ProbateStatus == ProbateStatus.LikelyProbate);
         return new ReadinessItem("trust", "Consider a living trust",
             trust?.Status == DocumentStatus.Executed,
             trust?.Status switch

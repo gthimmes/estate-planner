@@ -1,25 +1,16 @@
 import { expect, test, type Page } from '@playwright/test'
+import { addFamily, onboard } from './helpers'
 
 async function setUpHouseholdWithHouse(page: Page) {
-  await page.goto('/welcome')
-  await page.getByLabel(/what should we call your plan/i).fill('The Trust Family')
-  await page.getByLabel(/where do you live/i).selectOption('CO')
-  await page.getByLabel(/marital status/i).selectOption('Married')
-  await page.getByRole('button', { name: /start my plan/i }).click()
-  await expect(page.getByRole('heading', { name: 'The Trust Family' })).toBeVisible()
-
-  await page.getByRole('navigation').getByRole('link', { name: 'Family' }).click()
-  for (const person of [
-    { first: 'Gray', last: 'Grantor', role: 'Self', dob: '1968-01-01' },
-    { first: 'Trudy', last: 'Trustee', role: 'Spouse', dob: '1969-02-02' },
-  ]) {
-    await page.getByLabel(/first name/i).fill(person.first)
-    await page.getByLabel(/last name/i).fill(person.last)
-    await page.getByLabel(/who are they/i).selectOption(person.role)
-    await page.getByLabel(/date of birth/i).fill(person.dob)
-    await page.getByRole('button', { name: /add person/i }).click()
-    await expect(page.getByRole('cell', { name: `${person.first} ${person.last}` })).toBeVisible()
-  }
+  await onboard(page, {
+    planName: 'The Trust Family',
+    firstName: 'Gray',
+    lastName: 'Grantor',
+    dob: '1968-01-01',
+    state: 'CO',
+    maritalStatus: 'Married',
+  })
+  await addFamily(page, [{ first: 'Trudy', last: 'Trustee', role: 'Spouse', dob: '1969-02-02' }])
 
   await page.getByRole('navigation').getByRole('link', { name: /assets & debts/i }).click()
   await page.getByLabel(/^name$/i).fill('Family home')

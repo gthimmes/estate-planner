@@ -1,26 +1,19 @@
 import { expect, test, type Page } from '@playwright/test'
+import { addFamily, onboard } from './helpers'
 
 async function setUpHousehold(page: Page) {
-  await page.goto('/welcome')
-  await page.getByLabel(/what should we call your plan/i).fill('The Will Family')
-  await page.getByLabel(/where do you live/i).selectOption('CA')
-  await page.getByLabel(/marital status/i).selectOption('Married')
-  await page.getByRole('button', { name: /start my plan/i }).click()
-  await expect(page.getByRole('heading', { name: 'The Will Family' })).toBeVisible()
-
-  await page.getByRole('navigation').getByRole('link', { name: 'Family' }).click()
-  for (const person of [
-    { first: 'Taylor', last: 'Testator', role: 'Self', dob: '1980-01-01' },
+  await onboard(page, {
+    planName: 'The Will Family',
+    firstName: 'Taylor',
+    lastName: 'Testator',
+    dob: '1980-01-01',
+    state: 'CA',
+    maritalStatus: 'Married',
+  })
+  await addFamily(page, [
     { first: 'Sam', last: 'Spouse', role: 'Spouse', dob: '1982-02-02' },
     { first: 'Riley', last: 'Junior', role: 'Child', dob: '2020-05-05' },
-  ]) {
-    await page.getByLabel(/first name/i).fill(person.first)
-    await page.getByLabel(/last name/i).fill(person.last)
-    await page.getByLabel(/who are they/i).selectOption(person.role)
-    await page.getByLabel(/date of birth/i).fill(person.dob)
-    await page.getByRole('button', { name: /add person/i }).click()
-    await expect(page.getByRole('cell', { name: `${person.first} ${person.last}` })).toBeVisible()
-  }
+  ])
 }
 
 test.describe('Phase 2: the will', () => {

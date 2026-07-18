@@ -38,6 +38,23 @@ public class HouseholdApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    public async Task Create_household_with_self_creates_the_owner_person()
+    {
+        var response = await _client.PostAsJsonAsync("/api/households", new CreateHouseholdRequest(
+            "Solo Plan", "WA", MaritalStatus.Single,
+            new PersonRequest("Owner", "Person", PersonRole.Self, new DateOnly(1980, 4, 4))), Json);
+        response.EnsureSuccessStatusCode();
+        var household = (await response.Content.ReadFromJsonAsync<HouseholdResponse>(Json))!;
+
+        var people = await _client.GetFromJsonAsync<List<PersonResponse>>(
+            $"/api/households/{household.Id}/people", Json);
+
+        var self = Assert.Single(people!);
+        Assert.Equal(PersonRole.Self, self.Role);
+        Assert.Equal("Owner", self.FirstName);
+    }
+
+    [Fact]
     public async Task Create_household_rejects_invalid_state_code()
     {
         var response = await _client.PostAsJsonAsync("/api/households",

@@ -1,25 +1,16 @@
 import { expect, test, type Page } from '@playwright/test'
+import { addFamily, onboard } from './helpers'
 
 async function completeAWill(page: Page) {
-  await page.goto('/welcome')
-  await page.getByLabel(/what should we call your plan/i).fill('The Signing Family')
-  await page.getByLabel(/where do you live/i).selectOption('TX')
-  await page.getByLabel(/marital status/i).selectOption('Married')
-  await page.getByRole('button', { name: /start my plan/i }).click()
-  await expect(page.getByRole('heading', { name: 'The Signing Family' })).toBeVisible()
-
-  await page.getByRole('navigation').getByRole('link', { name: 'Family' }).click()
-  for (const person of [
-    { first: 'Alex', last: 'Adult', role: 'Self', dob: '1975-03-03' },
-    { first: 'Blake', last: 'Adult', role: 'Spouse', dob: '1976-04-04' },
-  ]) {
-    await page.getByLabel(/first name/i).fill(person.first)
-    await page.getByLabel(/last name/i).fill(person.last)
-    await page.getByLabel(/who are they/i).selectOption(person.role)
-    await page.getByLabel(/date of birth/i).fill(person.dob)
-    await page.getByRole('button', { name: /add person/i }).click()
-    await expect(page.getByRole('cell', { name: `${person.first} ${person.last}` })).toBeVisible()
-  }
+  await onboard(page, {
+    planName: 'The Signing Family',
+    firstName: 'Alex',
+    lastName: 'Adult',
+    dob: '1975-03-03',
+    state: 'TX',
+    maritalStatus: 'Married',
+  })
+  await addFamily(page, [{ first: 'Blake', last: 'Adult', role: 'Spouse', dob: '1976-04-04' }])
 
   await page.getByRole('navigation').getByRole('link', { name: 'Your will' }).click()
   await page.getByLabel(/this will is for/i).selectOption({ label: 'Alex Adult' })

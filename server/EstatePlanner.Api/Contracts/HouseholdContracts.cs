@@ -2,7 +2,11 @@ using EstatePlanner.Api.Models;
 
 namespace EstatePlanner.Api.Contracts;
 
-public record CreateHouseholdRequest(string Name, string StateCode, MaritalStatus MaritalStatus);
+public record CreateHouseholdRequest(
+    string Name,
+    string StateCode,
+    MaritalStatus MaritalStatus,
+    PersonRequest? Self = null);
 
 public record UpdateHouseholdRequest(string Name, string StateCode, MaritalStatus MaritalStatus);
 

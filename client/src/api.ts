@@ -17,11 +17,21 @@ import type {
   WillPlanInput,
 } from './types'
 
+export class NotFoundError extends Error {}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, {
-    headers: { 'Content-Type': 'application/json' },
-    ...init,
-  })
+  let response: Response
+  try {
+    response = await fetch(path, {
+      headers: { 'Content-Type': 'application/json' },
+      ...init,
+    })
+  } catch {
+    throw new Error("Can't reach the server. Check that the app's backend is running, then try again.")
+  }
+  if (response.status === 404) {
+    throw new NotFoundError('Not found')
+  }
   if (!response.ok) {
     let detail = `${response.status} ${response.statusText}`
     try {
@@ -40,6 +50,7 @@ export interface HouseholdInput {
   name: string
   stateCode: string
   maritalStatus: MaritalStatus
+  self?: PersonInput
 }
 
 export type PersonInput = Omit<Person, 'id'>
@@ -135,6 +146,10 @@ export function getCurrentHouseholdId(): string | null {
 
 export function setCurrentHouseholdId(id: string) {
   localStorage.setItem(HOUSEHOLD_KEY, id)
+}
+
+export function clearCurrentHouseholdId() {
+  localStorage.removeItem(HOUSEHOLD_KEY)
 }
 
 export function formatCurrency(value: number): string {

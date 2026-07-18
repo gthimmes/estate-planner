@@ -383,6 +383,35 @@ tr.debt-row td {
   font-weight: 600;
 }
 
+.me-badge {
+  margin-left: 0.5rem;
+}
+
+.row-actions {
+  white-space: nowrap;
+}
+
+.row-actions .link + .link {
+  margin-left: 0.75rem;
+}
+
+.edit-name {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.editing-row input,
+.editing-row select {
+  padding: 0.35rem 0.5rem;
+  max-width: 10rem;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
 /* ---------- will wizard ---------- */
 
 .wizard .card {
