@@ -154,7 +154,7 @@ export function Will({ householdId }: { householdId: string }) {
     }
   }
 
-  const set = (patch: Partial<WillPlanInput>) => setForm({ ...form, ...patch })
+  const set = (patch: Partial<WillPlanInput>) => setForm((prev) => (prev ? { ...prev, ...patch } : prev))
 
   const totalPercent = form.residuaryShares.reduce((sum, s) => sum + (s.percent || 0), 0)
 

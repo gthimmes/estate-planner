@@ -63,7 +63,8 @@ Quality gate: every feature ships with xUnit integration tests (real Postgres vi
 - [x] E-signatures (ported from the user's e-sign/InkWell repo, MIT): draw or type → trimmed PNG,
       SHA-256 fingerprint + UTC timestamp, Signing Record on web + stamped into the PDF
 - [x] Recorded full-product demo (Playwright video) doubling as top-to-bottom validation
-- [ ] Accounts & authentication (prerequisite for sharing and deployment)
+- [x] Accounts & authentication: cookie sessions, hashed passwords, per-user household
+      isolation via a global ownership filter, claim flow for pre-auth data
 - [ ] Executor / family scoped sharing
 - [ ] Estate-tax awareness (verify current federal/state figures first)
 - [ ] Document file uploads in the vault

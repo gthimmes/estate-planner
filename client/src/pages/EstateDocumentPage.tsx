@@ -123,7 +123,7 @@ export function EstateDocumentPage({
     )
   }
 
-  const set = (patch: Partial<EstateDocumentInput>) => setForm({ ...form, ...patch })
+  const set = (patch: Partial<EstateDocumentInput>) => setForm((prev) => (prev ? { ...prev, ...patch } : prev))
   const executed = status === 'Executed'
 
   async function finish() {

@@ -98,7 +98,7 @@ export function Trust({ householdId }: { householdId: string }) {
     )
   }
 
-  const set = (patch: Partial<TrustPlanInput>) => setForm({ ...form, ...patch })
+  const set = (patch: Partial<TrustPlanInput>) => setForm((prev) => (prev ? { ...prev, ...patch } : prev))
   const executed = status === 'Executed'
 
   async function finish() {
