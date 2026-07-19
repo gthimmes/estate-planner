@@ -7,7 +7,7 @@ using EstatePlanner.Api.Models;
 
 namespace EstatePlanner.Api.Tests;
 
-public class HouseholdApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
+public class HouseholdApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>, IAsyncLifetime
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
@@ -15,6 +15,10 @@ public class HouseholdApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     };
 
     private readonly HttpClient _client = fixture.CreateClient();
+
+    public Task InitializeAsync() => _client.RegisterTestUserAsync();
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     private async Task<HouseholdResponse> CreateHousehold(string state = "CA")
     {

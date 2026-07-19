@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
 import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
-import { getCurrentHouseholdId } from './api'
+import { api, bootstrapHousehold, getCurrentHouseholdId } from './api'
+import { Auth } from './pages/Auth'
 import { Assets } from './pages/Assets'
 import { Dashboard } from './pages/Dashboard'
 import { Family } from './pages/Family'
@@ -14,7 +16,26 @@ import { Vault } from './pages/Vault'
 
 function App() {
   const location = useLocation()
+  const [authState, setAuthState] = useState<'loading' | 'anon' | 'authed'>('loading')
   const householdId = getCurrentHouseholdId()
+
+  useEffect(() => {
+    api
+      .me()
+      .then(async () => {
+        await bootstrapHousehold()
+        setAuthState('authed')
+      })
+      .catch(() => setAuthState('anon'))
+  }, [])
+
+  if (authState === 'loading') {
+    return <p className="loading app-loading">Loading your plan…</p>
+  }
+
+  if (authState === 'anon') {
+    return <Auth onAuthed={() => setAuthState('authed')} />
+  }
 
   if (!householdId && location.pathname !== '/welcome') {
     return <Navigate to="/welcome" replace />
@@ -45,6 +66,15 @@ function App() {
         <NavLink to="/vault">Vault</NavLink>
         <NavLink to="/executor-guide">Executor's guide</NavLink>
         <NavLink to="/settings">Life changes</NavLink>
+        <button
+          className="link signout"
+          onClick={async () => {
+            await api.logout().catch(() => undefined)
+            window.location.href = '/'
+          }}
+        >
+          Sign out
+        </button>
         <p className="disclosure">
           Self-help forms and information — not legal advice, and not a substitute for an attorney.
         </p>

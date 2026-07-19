@@ -92,6 +92,22 @@ p {
   font-weight: 600;
 }
 
+.app-loading {
+  display: grid;
+  place-items: center;
+  min-height: 60vh;
+}
+
+.sidebar .signout {
+  margin-top: auto;
+  align-self: flex-start;
+  padding: 0.55rem 0.75rem;
+}
+
+.sidebar .signout + .disclosure {
+  margin-top: 0.75rem;
+}
+
 .sidebar .disclosure {
   margin-top: auto;
   font-size: 0.72rem;

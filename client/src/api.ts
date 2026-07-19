@@ -59,7 +59,25 @@ export interface HouseholdInput {
 export type PersonInput = Omit<Person, 'id'>
 export type AssetInput = Omit<Asset, 'id' | 'probateStatus'>
 
+export interface Me {
+  id: string
+  email: string
+}
+
 export const api = {
+  register: (email: string, password: string) =>
+    request<Me>('/api/auth/register', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  login: (email: string, password: string) =>
+    request<Me>('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  logout: () => request<void>('/api/auth/logout', { method: 'POST' }),
+  me: () => request<Me>('/api/auth/me'),
+  listHouseholds: () => request<Household[]>('/api/households'),
+  claimHousehold: (householdId: string) =>
+    request<Household>('/api/households/claim', {
+      method: 'POST',
+      body: JSON.stringify({ householdId }),
+    }),
+
   createHousehold: (input: HouseholdInput) =>
     request<Household>('/api/households', { method: 'POST', body: JSON.stringify(input) }),
   getHousehold: (id: string) => request<Household>(`/api/households/${id}`),
@@ -191,6 +209,27 @@ export function setCurrentHouseholdId(id: string) {
 
 export function clearCurrentHouseholdId() {
   localStorage.removeItem(HOUSEHOLD_KEY)
+}
+
+/**
+ * After signing in, line up the right household: keep the stored one if this
+ * account owns it, claim it if it predates accounts, otherwise fall back to
+ * the account's first household (or none → onboarding).
+ */
+export async function bootstrapHousehold(): Promise<void> {
+  const mine = await api.listHouseholds()
+  const stored = getCurrentHouseholdId()
+  if (stored && mine.some((h) => h.id === stored)) return
+  if (stored) {
+    try {
+      await api.claimHousehold(stored)
+      return
+    } catch {
+      // gone, or someone else's — fall through
+    }
+  }
+  if (mine.length > 0) setCurrentHouseholdId(mine[0].id)
+  else clearCurrentHouseholdId()
 }
 
 export function formatCurrency(value: number): string {

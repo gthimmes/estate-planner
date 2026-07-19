@@ -3,9 +3,8 @@ import { onboard } from './helpers'
 
 test.describe('Phase 1: know your estate', () => {
   test('new user onboards, adds family and assets, and watches readiness grow', async ({ page }) => {
-    // --- Welcome / onboarding ---
+    // --- Account + welcome / onboarding ---
     await page.goto('/')
-    await expect(page).toHaveURL(/\/welcome$/)
     await expect(page.getByRole('heading', { name: /plan for the people you love/i })).toBeVisible()
     await expect(page.getByText(/not legal advice/i)).toBeVisible()
 

@@ -9,7 +9,7 @@ using EstatePlanner.Api.Services;
 
 namespace EstatePlanner.Api.Tests;
 
-public class ESignatureTests(ApiFixture fixture) : IClassFixture<ApiFixture>
+public class ESignatureTests(ApiFixture fixture) : IClassFixture<ApiFixture>, IAsyncLifetime
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
@@ -21,6 +21,10 @@ public class ESignatureTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
 
     private readonly HttpClient _client = fixture.CreateClient();
+
+    public Task InitializeAsync() => _client.RegisterTestUserAsync();
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public void Signature_service_validates_and_fingerprints()

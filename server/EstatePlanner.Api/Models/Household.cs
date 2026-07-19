@@ -16,6 +16,8 @@ public class Household
     /// <summary>Two-letter US state code; drives state-specific rules later.</summary>
     public required string StateCode { get; set; }
     public MaritalStatus MaritalStatus { get; set; }
+    /// <summary>Null on pre-auth data until the owner claims it after registering.</summary>
+    public Guid? OwnerUserId { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 
     public List<Person> People { get; set; } = [];

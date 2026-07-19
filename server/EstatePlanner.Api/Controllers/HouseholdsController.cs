@@ -47,22 +47,47 @@ public class HouseholdsController(AppDbContext db) : ControllerBase
                 DateOfBirth = self.DateOfBirth,
             });
         }
+        household.OwnerUserId = this.GetUserId();
         db.Households.Add(household);
         await db.SaveChangesAsync();
-        return CreatedAtAction(nameof(Get), new { id = household.Id }, HouseholdResponse.From(household));
+        return CreatedAtAction(nameof(Get), new { householdId = household.Id }, HouseholdResponse.From(household));
     }
 
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<HouseholdResponse>> Get(Guid id)
+    [HttpGet]
+    public async Task<ActionResult<List<HouseholdResponse>>> List()
     {
-        var household = await db.Households.FindAsync(id);
+        var userId = this.GetUserId();
+        return await db.Households
+            .Where(h => h.OwnerUserId == userId)
+            .OrderBy(h => h.CreatedAt)
+            .Select(h => HouseholdResponse.From(h))
+            .ToListAsync();
+    }
+
+    /// <summary>Adopts a pre-authentication (ownerless) household into this account.
+    /// Body-based on purpose: the ownership filter guards householdId routes.</summary>
+    [HttpPost("claim")]
+    public async Task<ActionResult<HouseholdResponse>> Claim(ClaimHouseholdRequest request)
+    {
+        var household = await db.Households
+            .FirstOrDefaultAsync(h => h.Id == request.HouseholdId && h.OwnerUserId == null);
+        if (household is null) return NotFound();
+        household.OwnerUserId = this.GetUserId();
+        await db.SaveChangesAsync();
+        return HouseholdResponse.From(household);
+    }
+
+    [HttpGet("{householdId:guid}")]
+    public async Task<ActionResult<HouseholdResponse>> Get(Guid householdId)
+    {
+        var household = await db.Households.FindAsync(householdId);
         return household is null ? NotFound() : HouseholdResponse.From(household);
     }
 
-    [HttpPut("{id:guid}")]
-    public async Task<ActionResult<HouseholdResponse>> Update(Guid id, UpdateHouseholdRequest request)
+    [HttpPut("{householdId:guid}")]
+    public async Task<ActionResult<HouseholdResponse>> Update(Guid householdId, UpdateHouseholdRequest request)
     {
-        var household = await db.Households.FindAsync(id);
+        var household = await db.Households.FindAsync(householdId);
         if (household is null) return NotFound();
         if (string.IsNullOrWhiteSpace(request.Name))
             return ValidationProblem("Name is required.");

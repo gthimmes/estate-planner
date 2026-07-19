@@ -10,6 +10,8 @@ public record CreateHouseholdRequest(
 
 public record UpdateHouseholdRequest(string Name, string StateCode, MaritalStatus MaritalStatus);
 
+public record ClaimHouseholdRequest(Guid HouseholdId);
+
 public record HouseholdResponse(Guid Id, string Name, string StateCode, MaritalStatus MaritalStatus, DateTimeOffset CreatedAt)
 {
     public static HouseholdResponse From(Household h) => new(h.Id, h.Name, h.StateCode, h.MaritalStatus, h.CreatedAt);

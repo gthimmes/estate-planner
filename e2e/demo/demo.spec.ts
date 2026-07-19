@@ -12,10 +12,21 @@ async function beat(page: Page, ms = 900) {
  * here must actually work, on camera, in one continuous session.
  */
 test('Estate Planner — full product demo', async ({ page }) => {
-  // ---------- Welcome: the plan starts with you ----------
+  // ---------- Your private account ----------
   await page.goto('/')
   await expect(page.getByRole('heading', { name: /plan for the people you love/i })).toBeVisible()
   await beat(page, 1400)
+  await page.getByRole('tab', { name: /create account/i }).click()
+  await page
+    .getByLabel(/email/i)
+    .pressSequentially(`glenn-demo-${Date.now()}@example.com`, { delay: 20 })
+  await page.getByLabel(/password/i).fill('correct-horse-battery')
+  await beat(page, 800)
+  await page.getByRole('button', { name: /create my account/i }).click()
+
+  // ---------- Welcome: the plan starts with you ----------
+  await expect(page.getByLabel(/your first name/i)).toBeVisible()
+  await beat(page, 800)
   await page.getByLabel(/your first name/i).pressSequentially('Glenn', { delay: 40 })
   await page.getByLabel(/your last name/i).pressSequentially('Demo', { delay: 40 })
   await page.getByLabel(/your date of birth/i).fill('1974-06-15')

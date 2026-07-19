@@ -5,6 +5,7 @@ namespace EstatePlanner.Api.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
+    public DbSet<User> Users => Set<User>();
     public DbSet<Household> Households => Set<Household>();
     public DbSet<Person> People => Set<Person>();
     public DbSet<Asset> Assets => Set<Asset>();
@@ -16,8 +17,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<User>(e =>
+        {
+            e.Property(u => u.Email).HasMaxLength(320);
+            e.HasIndex(u => u.Email).IsUnique();
+            e.Property(u => u.PasswordHash).HasMaxLength(500);
+        });
+
         modelBuilder.Entity<Household>(e =>
         {
+            e.HasIndex(h => h.OwnerUserId);
             e.Property(h => h.Name).HasMaxLength(200);
             e.Property(h => h.StateCode).HasMaxLength(2);
             e.Property(h => h.MaritalStatus).HasConversion<string>().HasMaxLength(30);

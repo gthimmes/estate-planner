@@ -9,9 +9,20 @@ export interface OnboardOptions {
   maritalStatus?: 'Single' | 'Married' | 'DomesticPartnership' | 'Divorced' | 'Widowed'
 }
 
-/** Runs the welcome flow. The person entered here becomes the plan's Self. */
+/** Creates a fresh account; the cookie session sticks to the page context. */
+export async function registerAccount(page: Page) {
+  await page.goto('/')
+  await page.getByRole('tab', { name: /create account/i }).click()
+  await page.getByLabel(/email/i).fill(`e2e-${Date.now()}-${Math.floor(Math.random() * 1e9)}@test.local`)
+  await page.getByLabel(/password/i).fill('correct-horse-battery')
+  await page.getByRole('button', { name: /create my account/i }).click()
+  // No household yet → the app routes to onboarding
+  await expect(page.getByLabel(/your first name/i)).toBeVisible()
+}
+
+/** Registers an account, then runs the welcome flow. The person entered becomes the plan's Self. */
 export async function onboard(page: Page, opts: OnboardOptions) {
-  await page.goto('/welcome')
+  await registerAccount(page)
   await page.getByLabel(/your first name/i).fill(opts.firstName)
   await page.getByLabel(/your last name/i).fill(opts.lastName)
   await page.getByLabel(/your date of birth/i).fill(opts.dob)
