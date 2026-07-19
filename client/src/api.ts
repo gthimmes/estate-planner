@@ -10,6 +10,7 @@ import type {
   Person,
   TrustPlan,
   TrustPlanInput,
+  VaultFileMeta,
   VaultItem,
   VaultSummary,
   WillDocument,
@@ -150,6 +151,32 @@ export const api = {
     }),
   deleteVaultItem: (householdId: string, itemId: string) =>
     request<void>(`/api/households/${householdId}/vault/items/${itemId}`, { method: 'DELETE' }),
+
+  listVaultFiles: (householdId: string) =>
+    request<VaultFileMeta[]>(`/api/households/${householdId}/vault/files`),
+  uploadVaultFile: async (householdId: string, file: File): Promise<VaultFileMeta> => {
+    const form = new FormData()
+    form.append('file', file)
+    let response: Response
+    try {
+      response = await fetch(`/api/households/${householdId}/vault/files`, { method: 'POST', body: form })
+    } catch {
+      throw new Error("Can't reach the server. Check that the app's backend is running, then try again.")
+    }
+    if (!response.ok) {
+      let detail = `${response.status} ${response.statusText}`
+      try {
+        const problem = await response.json()
+        if (problem?.detail) detail = problem.detail
+      } catch {
+        // keep status text
+      }
+      throw new Error(detail)
+    }
+    return response.json() as Promise<VaultFileMeta>
+  },
+  deleteVaultFile: (householdId: string, fileId: string) =>
+    request<void>(`/api/households/${householdId}/vault/files/${fileId}`, { method: 'DELETE' }),
 }
 
 const HOUSEHOLD_KEY = 'estate-planner.householdId'

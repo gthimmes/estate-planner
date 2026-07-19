@@ -12,6 +12,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<EstateDocument> EstateDocuments => Set<EstateDocument>();
     public DbSet<TrustPlan> TrustPlans => Set<TrustPlan>();
     public DbSet<VaultItem> VaultItems => Set<VaultItem>();
+    public DbSet<VaultFile> VaultFiles => Set<VaultFile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -49,6 +50,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(t => t.DistributionStrategy).HasConversion<string>().HasMaxLength(30);
             e.Property(t => t.ExecutionNotes).HasMaxLength(500);
             e.OwnsMany(t => t.DistributionShares, b => b.ToJson());
+        });
+
+        modelBuilder.Entity<VaultFile>(e =>
+        {
+            e.HasOne(f => f.Household).WithMany(h => h.VaultFiles).HasForeignKey(f => f.HouseholdId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(f => f.FileName).HasMaxLength(255);
+            e.Property(f => f.ContentType).HasMaxLength(100);
         });
 
         modelBuilder.Entity<VaultItem>(e =>

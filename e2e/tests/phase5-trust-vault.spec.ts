@@ -93,6 +93,14 @@ test.describe('Phase 5: trust, funding, and vault', () => {
     await expect(page.getByRole('cell', { name: 'House deed' })).toBeVisible()
     await expect(page.getByRole('cell', { name: /safe deposit box #12/i })).toBeVisible()
 
+    // Upload a signed copy into the vault
+    await page.getByLabel(/upload a signed copy/i).setInputFiles({
+      name: 'signed-will.pdf',
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('%PDF-1.4 signed copy for the vault'),
+    })
+    await expect(page.getByRole('link', { name: 'signed-will.pdf' })).toBeVisible()
+
     // The executor's guide assembles the whole picture, vault pointers included
     await page.getByRole('navigation').getByRole('link', { name: /executor's guide/i }).click()
     await expect(page.getByRole('heading', { name: /executor's guide — estate of gray grantor/i })).toBeVisible()

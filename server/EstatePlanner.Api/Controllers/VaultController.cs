@@ -122,4 +122,63 @@ public class VaultController(AppDbContext db, TimeProvider time) : ControllerBas
         await db.SaveChangesAsync();
         return NoContent();
     }
+
+    [HttpGet("files")]
+    public async Task<ActionResult<List<VaultFileResponse>>> ListFiles(Guid householdId)
+    {
+        if (!await db.Households.AnyAsync(h => h.Id == householdId)) return NotFound();
+        return await db.VaultFiles
+            .Where(f => f.HouseholdId == householdId)
+            .OrderByDescending(f => f.UploadedAt)
+            .Select(f => new VaultFileResponse(f.Id, f.FileName, f.ContentType, f.SizeBytes, f.UploadedAt))
+            .ToListAsync();
+    }
+
+    [HttpPost("files")]
+    [RequestSizeLimit(VaultFile.MaxSizeBytes + 1024 * 1024)]
+    public async Task<ActionResult<VaultFileResponse>> Upload(Guid householdId, IFormFile file)
+    {
+        if (!await db.Households.AnyAsync(h => h.Id == householdId)) return NotFound();
+        if (file is null || file.Length == 0)
+            return Problem(detail: "Choose a file to upload.", statusCode: 400, title: "Validation failed");
+        if (file.Length > VaultFile.MaxSizeBytes)
+            return Problem(detail: "Files are limited to 15 MB.", statusCode: 400, title: "Validation failed");
+        if (!VaultFile.AllowedContentTypes.Contains(file.ContentType))
+            return Problem(detail: "Only PDF, PNG, and JPEG files are accepted.", statusCode: 400, title: "Validation failed");
+
+        using var stream = new MemoryStream();
+        await file.CopyToAsync(stream);
+        var record = new VaultFile
+        {
+            Id = Guid.NewGuid(),
+            HouseholdId = householdId,
+            FileName = Path.GetFileName(file.FileName),
+            ContentType = file.ContentType,
+            SizeBytes = file.Length,
+            Content = stream.ToArray(),
+            UploadedAt = time.GetUtcNow(),
+        };
+        db.VaultFiles.Add(record);
+        await db.SaveChangesAsync();
+        return CreatedAtAction(nameof(ListFiles), new { householdId },
+            new VaultFileResponse(record.Id, record.FileName, record.ContentType, record.SizeBytes, record.UploadedAt));
+    }
+
+    [HttpGet("files/{fileId:guid}/download")]
+    public async Task<IActionResult> Download(Guid householdId, Guid fileId)
+    {
+        var file = await db.VaultFiles.FirstOrDefaultAsync(f => f.Id == fileId && f.HouseholdId == householdId);
+        if (file is null) return NotFound();
+        return File(file.Content, file.ContentType, file.FileName);
+    }
+
+    [HttpDelete("files/{fileId:guid}")]
+    public async Task<IActionResult> DeleteFile(Guid householdId, Guid fileId)
+    {
+        var file = await db.VaultFiles.FirstOrDefaultAsync(f => f.Id == fileId && f.HouseholdId == householdId);
+        if (file is null) return NotFound();
+        db.VaultFiles.Remove(file);
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
 }

@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '../api'
 import {
   VAULT_CATEGORY_LABELS,
+  type VaultFileMeta,
   type VaultItemCategory,
   type VaultSummary,
 } from '../types'
@@ -17,11 +18,20 @@ const STATUS_LABELS: Record<string, string> = {
 
 export function Vault({ householdId }: { householdId: string }) {
   const [vault, setVault] = useState<VaultSummary | null>(null)
+  const [files, setFiles] = useState<VaultFileMeta[]>([])
   const [form, setForm] = useState(EMPTY_FORM)
   const [error, setError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const fileInput = useRef<HTMLInputElement>(null)
 
   const reload = useCallback(
-    () => api.getVault(householdId).then(setVault).catch(() => setError('Failed to load vault')),
+    () =>
+      Promise.all([api.getVault(householdId), api.listVaultFiles(householdId)])
+        .then(([v, f]) => {
+          setVault(v)
+          setFiles(f)
+        })
+        .catch(() => setError('Failed to load vault')),
     [householdId],
   )
 
@@ -97,6 +107,72 @@ export function Vault({ householdId }: { householdId: string }) {
             ))}
           </tbody>
         </table>
+      </section>
+
+      <section className="card">
+        <h2>Signed copies ({files.length})</h2>
+        <p className="hint">
+          Upload scans or photos of your signed documents (PDF, PNG, or JPEG, up to 15 MB). The
+          paper original still matters — this is the backup your family can always find.
+        </p>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="application/pdf,image/png,image/jpeg"
+          aria-label="Upload a signed copy"
+          disabled={uploading}
+          onChange={async (e) => {
+            const file = e.target.files?.[0]
+            if (!file) return
+            setError(null)
+            setUploading(true)
+            try {
+              await api.uploadVaultFile(householdId, file)
+              await reload()
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Upload failed')
+            } finally {
+              setUploading(false)
+              if (fileInput.current) fileInput.current.value = ''
+            }
+          }}
+        />
+        {files.length > 0 && (
+          <table>
+            <thead>
+              <tr>
+                <th>File</th>
+                <th>Size</th>
+                <th>Uploaded</th>
+                <th aria-label="actions" />
+              </tr>
+            </thead>
+            <tbody>
+              {files.map((f) => (
+                <tr key={f.id}>
+                  <td>
+                    <a href={`/api/households/${householdId}/vault/files/${f.id}/download`} download>
+                      {f.fileName}
+                    </a>
+                  </td>
+                  <td>{(f.sizeBytes / 1024).toFixed(0)} KB</td>
+                  <td>{new Date(f.uploadedAt).toLocaleDateString()}</td>
+                  <td>
+                    <button
+                      className="link danger"
+                      onClick={async () => {
+                        await api.deleteVaultFile(householdId, f.id)
+                        await reload()
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
 
       <section className="card">

@@ -146,6 +146,46 @@ public class TrustAndVaultTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    public async Task Vault_files_upload_download_and_validate()
+    {
+        var (householdId, _, _) = await SetUpFamily();
+        var baseUrl = $"/api/households/{householdId}/vault/files";
+        var pdfBytes = "%PDF-1.4 fake-but-shaped-like-a-pdf"u8.ToArray();
+
+        // Wrong content type is rejected
+        using (var badForm = new MultipartFormDataContent())
+        {
+            var part = new ByteArrayContent(pdfBytes);
+            part.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/plain");
+            badForm.Add(part, "file", "notes.txt");
+            var bad = await _client.PostAsync(baseUrl, badForm);
+            Assert.Equal(HttpStatusCode.BadRequest, bad.StatusCode);
+        }
+
+        // A PDF uploads and round-trips byte-for-byte
+        using var form = new MultipartFormDataContent();
+        var content = new ByteArrayContent(pdfBytes);
+        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+        form.Add(content, "file", "signed-will.pdf");
+        var upload = await _client.PostAsync(baseUrl, form);
+        upload.EnsureSuccessStatusCode();
+        var meta = (await upload.Content.ReadFromJsonAsync<VaultFileResponse>(Json))!;
+        Assert.Equal("signed-will.pdf", meta.FileName);
+        Assert.Equal(pdfBytes.Length, meta.SizeBytes);
+
+        var download = await _client.GetAsync($"{baseUrl}/{meta.Id}/download");
+        download.EnsureSuccessStatusCode();
+        Assert.Equal(pdfBytes, await download.Content.ReadAsByteArrayAsync());
+
+        var list = await _client.GetFromJsonAsync<List<VaultFileResponse>>(baseUrl, Json);
+        Assert.Single(list!);
+
+        (await _client.DeleteAsync($"{baseUrl}/{meta.Id}")).EnsureSuccessStatusCode();
+        list = await _client.GetFromJsonAsync<List<VaultFileResponse>>(baseUrl, Json);
+        Assert.Empty(list!);
+    }
+
+    [Fact]
     public async Task Executor_guide_summarizes_the_whole_plan()
     {
         var (householdId, self, spouse) = await SetUpFamily();

@@ -219,6 +219,14 @@ export interface VaultItem {
   updatedAt: string
 }
 
+export interface VaultFileMeta {
+  id: string
+  fileName: string
+  contentType: string
+  sizeBytes: number
+  uploadedAt: string
+}
+
 export interface VaultSummary {
   documents: {
     key: string

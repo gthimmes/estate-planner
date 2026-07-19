@@ -52,6 +52,8 @@ public record VaultItemResponse(
 
 public record VaultDocumentEntry(string Key, string Title, string Status, DateOnly? ExecutedOn, string? StorageLocation);
 
+public record VaultFileResponse(Guid Id, string FileName, string ContentType, long SizeBytes, DateTimeOffset UploadedAt);
+
 public record VaultSummaryResponse(
     IReadOnlyList<VaultDocumentEntry> Documents,
     IReadOnlyList<VaultItemResponse> Items);

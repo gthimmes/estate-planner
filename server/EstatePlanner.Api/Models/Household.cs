@@ -24,6 +24,7 @@ public class Household
     public List<EstateDocument> Documents { get; set; } = [];
     public List<TrustPlan> TrustPlans { get; set; } = [];
     public List<VaultItem> VaultItems { get; set; } = [];
+    public List<VaultFile> VaultFiles { get; set; } = [];
 
     public Person? SelfPerson => People.FirstOrDefault(p => p.Role == PersonRole.Self);
 
