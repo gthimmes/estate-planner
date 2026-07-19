@@ -92,5 +92,13 @@ test.describe('Phase 5: trust, funding, and vault', () => {
     await page.getByRole('button', { name: /add to vault/i }).click()
     await expect(page.getByRole('cell', { name: 'House deed' })).toBeVisible()
     await expect(page.getByRole('cell', { name: /safe deposit box #12/i })).toBeVisible()
+
+    // The executor's guide assembles the whole picture, vault pointers included
+    await page.getByRole('navigation').getByRole('link', { name: /executor's guide/i }).click()
+    await expect(page.getByRole('heading', { name: /executor's guide — estate of gray grantor/i })).toBeVisible()
+    const guide = page.locator('.legal-document')
+    await expect(guide).toContainText('House deed (PropertyDeed): Safe deposit box #12')
+    await expect(guide).toContainText('certified copies of the death certificate')
+    await expect(page.getByRole('link', { name: /download pdf/i })).toBeVisible()
   })
 })

@@ -144,4 +144,39 @@ public class TrustAndVaultTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         var delete = await _client.DeleteAsync($"/api/households/{householdId}/vault/items/{item.Id}");
         Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
     }
+
+    [Fact]
+    public async Task Executor_guide_summarizes_the_whole_plan()
+    {
+        var (householdId, self, spouse) = await SetUpFamily();
+
+        await Post<AssetResponse>($"/api/households/{householdId}/assets", new AssetRequest(
+            "Family home", AssetCategory.RealEstate, 500_000m, null, BeneficiaryStatus.NotApplicable, null, null));
+        await Post<AssetResponse>($"/api/households/{householdId}/assets", new AssetRequest(
+            "IRA", AssetCategory.Retirement, 200_000m, null, BeneficiaryStatus.Designated, "Trudy Trustee", null));
+        await Post<VaultItemResponse>($"/api/households/{householdId}/vault/items",
+            new VaultItemRequest("House deed", VaultItemCategory.PropertyDeed, "Safe deposit box #12", null));
+
+        // Sign the will so the guide can point at the original
+        await _client.PutAsJsonAsync($"/api/households/{householdId}/will", new SaveWillRequest(
+            self, spouse, null, true, null, null, ResiduaryStrategy.SpouseThenChildren, [], []), Json);
+        (await _client.PostAsync($"/api/households/{householdId}/will/complete", null)).EnsureSuccessStatusCode();
+        await Post<WillPlanResponse>($"/api/households/{householdId}/will/execution",
+            new MarkExecutedRequest(DateOnly.FromDateTime(DateTime.UtcNow), "W One", "W Two", "Fireproof safe"));
+
+        var guide = await _client.GetFromJsonAsync<WillDocumentResponse>(
+            $"/api/households/{householdId}/executor-guide", Json);
+        Assert.StartsWith("Executor's Guide — Estate of Gray Grantor", guide!.Title);
+        var text = string.Join("\n", guide.Articles.SelectMany(a => a.Paragraphs));
+        Assert.Contains("Executor: Trudy Trustee", text);
+        Assert.Contains("Original: Fireproof safe", text);
+        Assert.Contains("expect this to go through probate", text); // the home
+        Assert.Contains("passes directly to its designated beneficiary (Trudy Trustee)", text); // the IRA
+        Assert.Contains("House deed (PropertyDeed): Safe deposit box #12", text);
+        Assert.Contains("certified copies of the death certificate", text);
+
+        var pdf = await _client.GetAsync($"/api/households/{householdId}/executor-guide/pdf");
+        pdf.EnsureSuccessStatusCode();
+        Assert.Equal("application/pdf", pdf.Content.Headers.ContentType?.MediaType);
+    }
 }

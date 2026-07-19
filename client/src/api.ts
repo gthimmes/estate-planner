@@ -139,6 +139,9 @@ export const api = {
   getTrustRender: (householdId: string, personId?: string | null) =>
     request<WillDocument>(`/api/households/${householdId}/trust/document${personQuery(personId)}`),
 
+  getExecutorGuide: (householdId: string) =>
+    request<WillDocument>(`/api/households/${householdId}/executor-guide`),
+
   getVault: (householdId: string) => request<VaultSummary>(`/api/households/${householdId}/vault`),
   createVaultItem: (householdId: string, input: Omit<VaultItem, 'id' | 'updatedAt'>) =>
     request<VaultItem>(`/api/households/${householdId}/vault/items`, {
