@@ -55,6 +55,19 @@ Quality gate: every feature ships with xUnit integration tests (real Postgres vi
 - [ ] Attorney referral pathway
 - [ ] E2E: sharing, reminders
 
+## Phase 7 — Fully featured (in progress)
+- [x] Per-person documents: every adult gets their own will, POA, healthcare directive, and trust (person tabs)
+- [x] Life changes: plan settings, state-move revalidation of signed documents, review-trigger guidance
+- [x] PDF export for every document (QuestPDF, DRAFT watermark, disclosure footer)
+- [x] Living will: standalone end-of-life declaration (no agent), witnessed execution guidance
+- [x] E-signatures (ported from the user's e-sign/InkWell repo, MIT): draw or type → trimmed PNG,
+      SHA-256 fingerprint + UTC timestamp, Signing Record on web + stamped into the PDF
+- [x] Recorded full-product demo (Playwright video) doubling as top-to-bottom validation
+- [ ] Accounts & authentication (prerequisite for sharing and deployment)
+- [ ] Executor / family scoped sharing
+- [ ] Estate-tax awareness (verify current federal/state figures first)
+- [ ] Document file uploads in the vault
+
 ## Standing research follow-ups
 - 2026 e-will / remote-online-notarization state-by-state status
 - Current federal + state estate/inheritance tax figures (verify before surfacing)

@@ -132,6 +132,7 @@ export function SignaturePad({
         <p className="hint">Draw it, or type your name — it becomes part of your signing record.</p>
         <div className="sigpad-tabs" role="tablist" aria-label="Signature mode">
           <button
+            type="button"
             role="tab"
             aria-selected={mode === 'draw'}
             className={mode === 'draw' ? 'active' : ''}
@@ -140,6 +141,7 @@ export function SignaturePad({
             Draw
           </button>
           <button
+            type="button"
             role="tab"
             aria-selected={mode === 'type'}
             className={mode === 'type' ? 'active' : ''}
@@ -194,14 +196,14 @@ export function SignaturePad({
           </p>
         )}
         <div className="wizard-nav">
-          <button className="secondary" onClick={clear}>
+          <button type="button" className="secondary" onClick={clear}>
             Clear
           </button>
           <span style={{ display: 'flex', gap: '0.75rem' }}>
-            <button className="secondary" onClick={onCancel}>
+            <button type="button" className="secondary" onClick={onCancel}>
               Cancel
             </button>
-            <button onClick={apply}>Apply signature</button>
+            <button type="button" onClick={apply}>Apply signature</button>
           </span>
         </div>
       </div>
