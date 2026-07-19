@@ -2,21 +2,25 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import { ExecutionInstructions, LegalDocumentView } from '../components/LegalDocumentView'
+import { SignatureField } from '../components/SignaturePad'
 import type { WillDocument as WillDocumentData, WillPlan } from '../types'
 
 function SigningForm({
   householdId,
   personId,
+  signerName,
   onExecuted,
 }: {
   householdId: string
   personId: string | null
+  signerName: string
   onExecuted: (will: WillPlan) => void
 }) {
   const [executedOn, setExecutedOn] = useState('')
   const [witness1Name, setWitness1] = useState('')
   const [witness2Name, setWitness2] = useState('')
   const [storageLocation, setStorage] = useState('')
+  const [signatureImage, setSignatureImage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -27,7 +31,7 @@ function SigningForm({
     try {
       const will = await api.markWillExecuted(
         householdId,
-        { executedOn, witness1Name, witness2Name, storageLocation },
+        { executedOn, witness1Name, witness2Name, storageLocation, signatureImage },
         personId,
       )
       onExecuted(will)
@@ -66,6 +70,18 @@ function SigningForm({
           required
         />
       </label>
+      <div className="signature-block">
+        <span className="field-caption">E-signature for your record (optional)</span>
+        <SignatureField
+          defaultName={signerName}
+          value={signatureImage}
+          onChange={setSignatureImage}
+        />
+        <span className="hint">
+          Adopted into your signing record and stamped on the PDF. The paper original with ink and
+          witnesses is still what makes the will legally valid.
+        </span>
+      </div>
       <button type="submit" disabled={saving}>
         {saving ? 'Recording…' : 'I signed it — record it'}
       </button>
@@ -162,6 +178,7 @@ export function WillDocument({ householdId }: { householdId: string }) {
           <SigningForm
             householdId={householdId}
             personId={personId}
+            signerName={doc.testatorName}
             onExecuted={(w) => {
               setWill(w)
               void load()

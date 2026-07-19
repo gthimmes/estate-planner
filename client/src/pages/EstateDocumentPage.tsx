@@ -4,6 +4,7 @@ import { api } from '../api'
 import { ExecutionInstructions, LegalDocumentView } from '../components/LegalDocumentView'
 import { PersonSelect } from '../components/PersonSelect'
 import { PersonTabs } from '../components/PersonTabs'
+import { SignatureField } from '../components/SignaturePad'
 import {
   isMinor,
   type EstateDocument,
@@ -30,6 +31,12 @@ const COPY: Record<
     intro:
       "If you can't speak for yourself, this document speaks for you: who makes medical decisions, and what you'd want at the end of life. It spares your family from guessing at the hardest moment of their lives.",
   },
+  LivingWill: {
+    title: 'Living will',
+    agentLabel: 'Healthcare agent',
+    intro:
+      'A pure declaration of your end-of-life wishes — no agent, no decisions delegated. It tells your doctors and family directly what you want when you can no longer say it. Pairs with (and should agree with) your healthcare directive.',
+  },
 }
 
 export function EstateDocumentPage({
@@ -47,6 +54,7 @@ export function EstateDocumentPage({
   const [render, setRender] = useState<WillDocument | null>(null)
   const [signDate, setSignDate] = useState('')
   const [signNotes, setSignNotes] = useState('')
+  const [signatureImage, setSignatureImage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -143,7 +151,7 @@ export function EstateDocumentPage({
       const doc = await api.markEstateDocumentExecuted(
         householdId,
         type,
-        { executedOn: signDate, executionNotes: signNotes || null },
+        { executedOn: signDate, executionNotes: signNotes || null, signatureImage },
         form.principalPersonId,
       )
       setStatus(doc.status)
@@ -203,24 +211,28 @@ export function EstateDocumentPage({
               }}
             />
           </label>
-          <label>
-            {copy.agentLabel}
-            <PersonSelect
-              people={adults}
-              value={form.agentPersonId}
-              onChange={(id) => set({ agentPersonId: id })}
-              exclude={[form.principalPersonId]}
-            />
-          </label>
-          <label>
-            Backup agent (recommended)
-            <PersonSelect
-              people={adults}
-              value={form.backupAgentPersonId}
-              onChange={(id) => set({ backupAgentPersonId: id })}
-              exclude={[form.principalPersonId, form.agentPersonId]}
-            />
-          </label>
+          {type !== 'LivingWill' && (
+            <>
+              <label>
+                {copy.agentLabel}
+                <PersonSelect
+                  people={adults}
+                  value={form.agentPersonId}
+                  onChange={(id) => set({ agentPersonId: id })}
+                  exclude={[form.principalPersonId]}
+                />
+              </label>
+              <label>
+                Backup agent (recommended)
+                <PersonSelect
+                  people={adults}
+                  value={form.backupAgentPersonId}
+                  onChange={(id) => set({ backupAgentPersonId: id })}
+                  exclude={[form.principalPersonId, form.agentPersonId]}
+                />
+              </label>
+            </>
+          )}
         </div>
 
         {type === 'FinancialPoa' && (
@@ -246,7 +258,7 @@ export function EstateDocumentPage({
           </div>
         )}
 
-        {type === 'HealthcareDirective' && (
+        {(type === 'HealthcareDirective' || type === 'LivingWill') && (
           <>
             <div className="radio-group" role="radiogroup" aria-label="Life support preference">
               <p className="hint">If you're near the end of life and can't speak for yourself:</p>
@@ -254,7 +266,9 @@ export function EstateDocumentPage({
                 [
                   ['DoNotProlong', "Don't prolong my life with machines if there's no reasonable hope of recovery"],
                   ['ProlongLife', 'Prolong my life as long as possible, within accepted medical standards'],
-                  ['AgentDecides', 'Let my agent decide based on what they believe I would want'],
+                  type === 'HealthcareDirective'
+                    ? ['AgentDecides', 'Let my agent decide based on what they believe I would want']
+                    : ['AgentDecides', 'Let my loved ones and doctors be guided by what they believe I would want'],
                 ] as [LifeSupportPreference, string][]
               ).map(([value, label]) => (
                 <label key={value} className="radio">
@@ -268,14 +282,16 @@ export function EstateDocumentPage({
                 </label>
               ))}
             </div>
-            <label className="checkbox">
-              <input
-                type="checkbox"
-                checked={form.includeHipaa}
-                onChange={(e) => set({ includeHipaa: e.target.checked })}
-              />
-              Include a HIPAA authorization so my agent can see my medical records (recommended)
-            </label>
+            {type === 'HealthcareDirective' && (
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.includeHipaa}
+                  onChange={(e) => set({ includeHipaa: e.target.checked })}
+                />
+                Include a HIPAA authorization so my agent can see my medical records (recommended)
+              </label>
+            )}
             <label className="checkbox">
               <input
                 type="checkbox"
@@ -289,7 +305,10 @@ export function EstateDocumentPage({
 
         <div className="wizard-nav">
           <span />
-          <button onClick={finish} disabled={saving || !form.agentPersonId}>
+          <button
+            onClick={finish}
+            disabled={saving || (type === 'LivingWill' ? !form.principalPersonId : !form.agentPersonId)}
+          >
             {saving ? 'Working…' : render ? 'Save changes & refresh document' : 'Finish & preview document'}
           </button>
         </div>
@@ -321,6 +340,18 @@ export function EstateDocumentPage({
                 placeholder="e.g. notarized at the bank; copies to agent"
               />
             </label>
+            <div className="signature-block">
+              <span className="field-caption">E-signature for your record (optional)</span>
+              <SignatureField
+                defaultName={
+                  people.find((p) => p.id === form.principalPersonId)
+                    ? `${people.find((p) => p.id === form.principalPersonId)!.firstName} ${people.find((p) => p.id === form.principalPersonId)!.lastName}`
+                    : ''
+                }
+                value={signatureImage}
+                onChange={setSignatureImage}
+              />
+            </div>
             <button type="submit" disabled={saving}>
               I signed it — record it
             </button>

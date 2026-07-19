@@ -46,6 +46,31 @@ public class PdfService
                             content.Item().PaddingTop(6).Text(paragraph).Justify();
                         }
                     }
+
+                    if (document.Signing is SigningRecord signing)
+                    {
+                        content.Item().PaddingTop(24).Border(0.75f).Padding(14).Column(box =>
+                        {
+                            box.Item().Text("SIGNING RECORD").FontSize(10).Bold().LetterSpacing(0.05f);
+                            if (signing.SignatureImage is string dataUrl &&
+                                dataUrl.StartsWith("data:image/png;base64,", StringComparison.Ordinal))
+                            {
+                                var bytes = Convert.FromBase64String(dataUrl["data:image/png;base64,".Length..]);
+                                box.Item().PaddingTop(8).MaxHeight(60).AlignLeft().Image(bytes).FitHeight();
+                            }
+                            box.Item().PaddingTop(8).Text(
+                                $"Executed on {signing.ExecutedOn:MMMM d, yyyy}." +
+                                (string.IsNullOrWhiteSpace(signing.Detail) ? "" : $" {signing.Detail}"))
+                                .FontSize(9);
+                            if (signing.SignatureHash is not null)
+                            {
+                                box.Item().PaddingTop(4).Text(
+                                    $"Electronic signature adopted {signing.SignedAtUtc:yyyy-MM-dd HH:mm} UTC · " +
+                                    $"SHA-256 {signing.SignatureHash}")
+                                    .FontSize(7.5f).FontColor(Colors.Grey.Darken1);
+                            }
+                        });
+                    }
                 });
 
                 page.Footer().Column(footer =>

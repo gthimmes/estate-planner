@@ -118,6 +118,15 @@ export interface MarkExecutedInput {
   witness1Name: string
   witness2Name: string
   storageLocation: string
+  signatureImage?: string | null
+}
+
+export interface SigningRecord {
+  signatureImage: string | null
+  signatureHash: string | null
+  signedAtUtc: string | null
+  executedOn: string | null
+  detail: string | null
 }
 
 export interface DocumentArticle {
@@ -138,9 +147,10 @@ export interface WillDocument {
   }
   beneficiaryConflictNotes: string[]
   disclosure: string
+  signing: SigningRecord | null
 }
 
-export type EstateDocumentType = 'FinancialPoa' | 'HealthcareDirective'
+export type EstateDocumentType = 'FinancialPoa' | 'HealthcareDirective' | 'LivingWill'
 
 export type DocumentStatus = 'Draft' | 'Complete' | 'Executed'
 

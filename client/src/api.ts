@@ -111,7 +111,7 @@ export const api = {
   markEstateDocumentExecuted: (
     householdId: string,
     type: EstateDocumentType,
-    input: { executedOn: string; executionNotes: string | null },
+    input: { executedOn: string; executionNotes: string | null; signatureImage?: string | null },
     personId?: string | null,
   ) =>
     request<EstateDocument>(`/api/households/${householdId}/documents/${type}/execution${personQuery(personId)}`, {
@@ -129,7 +129,7 @@ export const api = {
     request<TrustPlan>(`/api/households/${householdId}/trust/complete${personQuery(personId)}`, { method: 'POST' }),
   markTrustExecuted: (
     householdId: string,
-    input: { executedOn: string; executionNotes: string | null },
+    input: { executedOn: string; executionNotes: string | null; signatureImage?: string | null },
     personId?: string | null,
   ) =>
     request<TrustPlan>(`/api/households/${householdId}/trust/execution${personQuery(personId)}`, {

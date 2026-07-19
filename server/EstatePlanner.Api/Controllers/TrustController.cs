@@ -126,9 +126,16 @@ public class TrustController(AppDbContext db, TrustService trustService, PdfServ
         if (request.ExecutedOn > DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime))
             return Problem(detail: "The signing date can't be in the future.", statusCode: 400, title: "Validation failed");
 
+        var (sigError, sigHash, _) = SignatureService.Process(request.SignatureImage);
+        if (sigError is not null)
+            return Problem(detail: sigError, statusCode: 400, title: "Validation failed");
+
         trust.Status = DocumentStatus.Executed;
         trust.ExecutedOn = request.ExecutedOn;
         trust.ExecutedStateCode = household.StateCode;
+        trust.SignatureImage = request.SignatureImage;
+        trust.SignatureHash = sigHash;
+        trust.SignedAtUtc = sigHash is null ? null : time.GetUtcNow();
         trust.ExecutionNotes = request.ExecutionNotes?.Trim();
         trust.UpdatedAt = time.GetUtcNow();
         await db.SaveChangesAsync();

@@ -86,6 +86,38 @@ public class EstateDocumentTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    public async Task Living_will_requires_no_agent_and_declares_wishes()
+    {
+        var (householdId, self, _) = await SetUpFamily();
+        var baseUrl = $"/api/households/{householdId}/documents/LivingWill";
+
+        // Life-support choice is required
+        await _client.PutAsJsonAsync(baseUrl, new SaveEstateDocumentRequest(
+            self, null, null, true, LifeSupportPreference.NotChosen, false, false), Json);
+        var blocked = await _client.PostAsync($"{baseUrl}/complete", null);
+        Assert.Equal(HttpStatusCode.BadRequest, blocked.StatusCode);
+
+        // But no agent is needed — it's a pure declaration
+        await _client.PutAsJsonAsync(baseUrl, new SaveEstateDocumentRequest(
+            self, null, null, true, LifeSupportPreference.DoNotProlong, false, true), Json);
+        (await _client.PostAsync($"{baseUrl}/complete", null)).EnsureSuccessStatusCode();
+
+        var document = await _client.GetFromJsonAsync<WillDocumentResponse>($"{baseUrl}/document", Json);
+        Assert.Equal("Living Will of Pat Principal", document!.Title);
+        var text = string.Join("\n", document.Articles.SelectMany(a => a.Paragraphs));
+        Assert.Contains("permitted to die naturally", text);
+        Assert.Contains("relief of pain", text);
+        Assert.Contains("nutrition and hydration", text);
+        Assert.Contains("donate any organs", text);
+        Assert.Equal(2, document.Execution.WitnessCount);
+
+        // PDF works for the new type too
+        var pdfResponse = await _client.GetAsync($"{baseUrl}/document/pdf");
+        pdfResponse.EnsureSuccessStatusCode();
+        Assert.Equal("application/pdf", pdfResponse.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
     public async Task Agent_cannot_be_principal_and_execution_follows_will_rules()
     {
         var (householdId, self, spouse) = await SetUpFamily();

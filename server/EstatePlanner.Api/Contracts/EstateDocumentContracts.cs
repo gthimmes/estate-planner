@@ -11,7 +11,10 @@ public record SaveEstateDocumentRequest(
     bool IncludeHipaa,
     bool OrganDonation);
 
-public record MarkDocumentExecutedRequest(DateOnly ExecutedOn, string? ExecutionNotes);
+public record MarkDocumentExecutedRequest(
+    DateOnly ExecutedOn,
+    string? ExecutionNotes,
+    string? SignatureImage = null);
 
 public record EstateDocumentResponse(
     Guid Id,

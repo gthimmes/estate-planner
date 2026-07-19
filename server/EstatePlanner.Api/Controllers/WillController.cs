@@ -149,9 +149,16 @@ public class WillController(AppDbContext db, WillService willService, PdfService
         if (string.IsNullOrWhiteSpace(request.StorageLocation))
             return Problem(detail: "Record where the signed original is stored — your executor will need to find it.", statusCode: 400, title: "Validation failed");
 
+        var (sigError, sigHash, _) = SignatureService.Process(request.SignatureImage);
+        if (sigError is not null)
+            return Problem(detail: sigError, statusCode: 400, title: "Validation failed");
+
         will.Status = WillStatus.Executed;
         will.ExecutedOn = request.ExecutedOn;
         will.ExecutedStateCode = household.StateCode;
+        will.SignatureImage = request.SignatureImage;
+        will.SignatureHash = sigHash;
+        will.SignedAtUtc = sigHash is null ? null : time.GetUtcNow();
         will.Witness1Name = request.Witness1Name.Trim();
         will.Witness2Name = request.Witness2Name.Trim();
         will.StorageLocation = request.StorageLocation.Trim();

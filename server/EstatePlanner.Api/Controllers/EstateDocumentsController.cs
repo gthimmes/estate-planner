@@ -136,9 +136,16 @@ public class EstateDocumentsController(
         if (request.ExecutedOn > DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime))
             return Problem(detail: "The signing date can't be in the future.", statusCode: 400, title: "Validation failed");
 
+        var (sigError, sigHash, _) = SignatureService.Process(request.SignatureImage);
+        if (sigError is not null)
+            return Problem(detail: sigError, statusCode: 400, title: "Validation failed");
+
         doc.Status = DocumentStatus.Executed;
         doc.ExecutedOn = request.ExecutedOn;
         doc.ExecutedStateCode = household!.StateCode;
+        doc.SignatureImage = request.SignatureImage;
+        doc.SignatureHash = sigHash;
+        doc.SignedAtUtc = sigHash is null ? null : time.GetUtcNow();
         doc.ExecutionNotes = request.ExecutionNotes?.Trim();
         doc.UpdatedAt = time.GetUtcNow();
         await db.SaveChangesAsync();

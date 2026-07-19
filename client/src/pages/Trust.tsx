@@ -4,6 +4,7 @@ import { api } from '../api'
 import { ExecutionInstructions, LegalDocumentView } from '../components/LegalDocumentView'
 import { PersonSelect } from '../components/PersonSelect'
 import { PersonTabs } from '../components/PersonTabs'
+import { SignatureField } from '../components/SignaturePad'
 import {
   ASSET_CATEGORY_LABELS,
   isMinor,
@@ -23,6 +24,7 @@ export function Trust({ householdId }: { householdId: string }) {
   const [executedOn, setExecutedOn] = useState<string | null>(null)
   const [render, setRender] = useState<WillDocument | null>(null)
   const [signDate, setSignDate] = useState('')
+  const [signatureImage, setSignatureImage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -123,7 +125,7 @@ export function Trust({ householdId }: { householdId: string }) {
     try {
       const trust = await api.markTrustExecuted(
         householdId,
-        { executedOn: signDate, executionNotes: null },
+        { executedOn: signDate, executionNotes: null, signatureImage },
         form.grantorPersonId,
       )
       setStatus(trust.status)
@@ -309,6 +311,18 @@ export function Trust({ householdId }: { householdId: string }) {
                 required
               />
             </label>
+            <div className="signature-block">
+              <span className="field-caption">E-signature for your record (optional)</span>
+              <SignatureField
+                defaultName={
+                  people.find((p) => p.id === form.grantorPersonId)
+                    ? `${people.find((p) => p.id === form.grantorPersonId)!.firstName} ${people.find((p) => p.id === form.grantorPersonId)!.lastName}`
+                    : ''
+                }
+                value={signatureImage}
+                onChange={setSignatureImage}
+              />
+            </div>
             <button type="submit" disabled={saving}>
               I signed it — record it
             </button>

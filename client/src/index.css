@@ -428,6 +428,101 @@ tr.debt-row td {
   font-weight: 500;
 }
 
+/* ---------- signature pad (ported from the e-sign/InkWell project) ---------- */
+
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(25, 28, 34, 0.55);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+}
+
+.modal {
+  width: min(560px, 92vw);
+}
+
+.sigpad-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.sigpad-tabs button {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.35rem 1rem;
+}
+
+.sigpad-tabs button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.sigpad-canvas {
+  width: 100%;
+  height: 180px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: #fff;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.sigpad-type-input {
+  width: 100%;
+}
+
+.sigpad-preview {
+  font-family: 'Segoe Script', 'Brush Script MT', cursive;
+  font-size: 2.2rem;
+  color: #0b1f45;
+  text-align: center;
+  min-height: 3.5rem;
+  margin: 0.75rem 0 0;
+}
+
+.signature-image {
+  max-height: 56px;
+  max-width: 260px;
+}
+
+.signature-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.field-caption {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.signature-thumb-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.signing-record {
+  margin-top: 2rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+}
+
+.signature-fingerprint {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 0.7rem;
+  color: var(--text-soft);
+  word-break: break-all;
+}
+
 .button-link {
   display: inline-block;
   font-weight: 600;

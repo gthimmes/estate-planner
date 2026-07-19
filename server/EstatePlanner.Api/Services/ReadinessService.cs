@@ -97,7 +97,12 @@ public class ReadinessService(TimeProvider time)
         stale.AddRange(household.Documents
             .Where(d => d.Status == DocumentStatus.Executed && Moved(d.ExecutedStateCode))
             .Select(d =>
-                (d.Type == EstateDocumentType.FinancialPoa ? "Power of attorney" : "Healthcare directive") +
+                d.Type switch
+                {
+                    EstateDocumentType.FinancialPoa => "Power of attorney",
+                    EstateDocumentType.LivingWill => "Living will",
+                    _ => "Healthcare directive",
+                } +
                 $"{PersonSuffix(d.PrincipalPersonId)} — signed under {d.ExecutedStateCode} law"));
         return stale;
     }

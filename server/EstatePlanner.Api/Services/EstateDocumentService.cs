@@ -18,23 +18,28 @@ public class EstateDocumentService(TimeProvider time)
         else if (principal.IsMinor(Today))
             errors.Add("The person making this document must be an adult.");
 
-        var agentLabel = doc.Type == EstateDocumentType.FinancialPoa ? "financial agent" : "healthcare agent";
-        var agent = people.FirstOrDefault(p => p.Id == doc.AgentPersonId);
-        if (agent is null)
-            errors.Add($"Choose a {agentLabel}.");
-        else
+        // A living will is a pure declaration; the other documents appoint an agent.
+        if (doc.Type != EstateDocumentType.LivingWill)
         {
-            if (agent.Id == doc.PrincipalPersonId)
-                errors.Add($"The {agentLabel} acts on your behalf, so it can't be you.");
-            if (agent.IsMinor(Today))
-                errors.Add($"The {agentLabel} must be an adult.");
+            var agentLabel = doc.Type == EstateDocumentType.FinancialPoa ? "financial agent" : "healthcare agent";
+            var agent = people.FirstOrDefault(p => p.Id == doc.AgentPersonId);
+            if (agent is null)
+                errors.Add($"Choose a {agentLabel}.");
+            else
+            {
+                if (agent.Id == doc.PrincipalPersonId)
+                    errors.Add($"The {agentLabel} acts on your behalf, so it can't be you.");
+                if (agent.IsMinor(Today))
+                    errors.Add($"The {agentLabel} must be an adult.");
+            }
+
+            if (doc.BackupAgentPersonId is Guid backup &&
+                (backup == doc.AgentPersonId || backup == doc.PrincipalPersonId))
+                errors.Add("The backup agent must be a different person from the agent and the principal.");
         }
 
-        if (doc.BackupAgentPersonId is Guid backup &&
-            (backup == doc.AgentPersonId || backup == doc.PrincipalPersonId))
-            errors.Add("The backup agent must be a different person from the agent and the principal.");
-
-        if (doc.Type == EstateDocumentType.HealthcareDirective && doc.LifeSupport == LifeSupportPreference.NotChosen)
+        if (doc.Type is EstateDocumentType.HealthcareDirective or EstateDocumentType.LivingWill &&
+            doc.LifeSupport == LifeSupportPreference.NotChosen)
             errors.Add("Choose your life-support preference — it's the heart of this document.");
 
         return errors;
@@ -49,9 +54,80 @@ public class EstateDocumentService(TimeProvider time)
         var principalName = NameOf(doc.PrincipalPersonId);
         var agentName = NameOf(doc.AgentPersonId);
 
-        return doc.Type == EstateDocumentType.FinancialPoa
-            ? BuildPoa(household, doc, principalName, agentName)
-            : BuildHealthcareDirective(household, doc, principalName, agentName);
+        return doc.Type switch
+        {
+            EstateDocumentType.FinancialPoa => BuildPoa(household, doc, principalName, agentName),
+            EstateDocumentType.LivingWill => BuildLivingWill(household, doc, principalName),
+            _ => BuildHealthcareDirective(household, doc, principalName, agentName),
+        };
+    }
+
+    private static WillDocumentResponse BuildLivingWill(Household household, EstateDocument doc, string principalName)
+    {
+        var articles = new List<DocumentArticle>
+        {
+            new("Declaration",
+            [
+                $"I, {principalName}, a resident of the State of {household.StateCode}, being of sound mind, " +
+                "willfully and voluntarily declare my wishes regarding life-sustaining treatment, to be honored " +
+                "if I am unable to make or communicate my own healthcare decisions.",
+            ]),
+            new("Life-Sustaining Treatment",
+            [
+                doc.LifeSupport switch
+                {
+                    LifeSupportPreference.ProlongLife =>
+                        "I want my life prolonged as long as possible within the limits of generally accepted health care standards.",
+                    LifeSupportPreference.DoNotProlong =>
+                        "If I have an incurable and irreversible condition that will result in my death in a relatively " +
+                        "short time, or if I am unconscious and, to a reasonable degree of medical certainty, will not " +
+                        "regain consciousness, I direct that life-sustaining treatment be withheld or withdrawn, and " +
+                        "that I be permitted to die naturally.",
+                    _ => "I ask that decisions about life-sustaining treatment be guided by what my loved ones and " +
+                        "physicians believe I would want, considering my values and prior statements.",
+                },
+                "In all cases, I wish to receive treatment for the relief of pain and to be kept comfortable, " +
+                "even if such treatment may hasten my death.",
+                "Artificially administered nutrition and hydration are life-sustaining treatments for purposes of this declaration.",
+            ]),
+        };
+        if (doc.OrganDonation)
+            articles.Add(new("Organ Donation",
+                ["Upon my death, I wish to donate any organs and tissues that may benefit others."]));
+        articles.Add(new("Signature",
+        [
+            "Signed on ______________ (date), at ______________ (city, state).",
+            $"Declarant: ______________________________ ({principalName})",
+            "Witness 1 — Signature: ______________________  Name: ______________________",
+            "Witness 2 — Signature: ______________________  Name: ______________________",
+        ]));
+
+        return new WillDocumentResponse(
+            Title: $"Living Will of {principalName}",
+            TestatorName: principalName,
+            IsDraft: doc.Status == DocumentStatus.Draft,
+            Articles: articles,
+            Execution: new ExecutionRequirements(
+                household.StateCode.ToUpperInvariant(),
+                WitnessCount: 2,
+                Steps:
+                [
+                    "Print the declaration and sign it with two adult witnesses (or a notary, where your state allows).",
+                    "Relatives, heirs, and your healthcare providers generally should not serve as witnesses.",
+                    "Give copies to your doctor and loved ones; keep the original somewhere findable.",
+                    "If you also have an advance healthcare directive, keep the two consistent — this declaration states " +
+                    "your wishes; the directive appoints who speaks for you.",
+                ],
+                Warnings:
+                [
+                    "Witness eligibility rules vary by state — many states bar beneficiaries and care providers.",
+                    "Tell your loved ones this document exists. A living will nobody knows about can't guide anyone.",
+                ]),
+            BeneficiaryConflictNotes: [],
+            Disclosure: WillService.Disclosure,
+            Signing: doc.Status == DocumentStatus.Executed
+                ? new SigningRecord(doc.SignatureImage, doc.SignatureHash, doc.SignedAtUtc, doc.ExecutedOn, doc.ExecutionNotes)
+                : null);
     }
 
     private WillDocumentResponse BuildPoa(Household household, EstateDocument doc, string principalName, string agentName)
@@ -111,7 +187,10 @@ public class EstateDocumentService(TimeProvider time)
                     "An agent under a POA can access your money. Only appoint someone you trust completely.",
                 ]),
             BeneficiaryConflictNotes: [],
-            Disclosure: WillService.Disclosure);
+            Disclosure: WillService.Disclosure,
+            Signing: doc.Status == DocumentStatus.Executed
+                ? new SigningRecord(doc.SignatureImage, doc.SignatureHash, doc.SignedAtUtc, doc.ExecutedOn, doc.ExecutionNotes)
+                : null);
     }
 
     private WillDocumentResponse BuildHealthcareDirective(Household household, EstateDocument doc, string principalName, string agentName)
@@ -181,7 +260,10 @@ public class EstateDocumentService(TimeProvider time)
                     "If you spend time in another state, consider signing that state's form too — portability isn't guaranteed.",
                 ]),
             BeneficiaryConflictNotes: [],
-            Disclosure: WillService.Disclosure);
+            Disclosure: WillService.Disclosure,
+            Signing: doc.Status == DocumentStatus.Executed
+                ? new SigningRecord(doc.SignatureImage, doc.SignatureHash, doc.SignedAtUtc, doc.ExecutedOn, doc.ExecutionNotes)
+                : null);
     }
 
     private static string NameOfIn(Household household, Guid? id) =>

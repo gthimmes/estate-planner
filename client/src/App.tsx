@@ -39,6 +39,7 @@ function App() {
         <NavLink to="/will">Your will</NavLink>
         <NavLink to="/poa">Power of attorney</NavLink>
         <NavLink to="/healthcare">Healthcare wishes</NavLink>
+        <NavLink to="/living-will">Living will</NavLink>
         <NavLink to="/trust">Living trust</NavLink>
         <NavLink to="/vault">Vault</NavLink>
         <NavLink to="/settings">Life changes</NavLink>
@@ -62,6 +63,10 @@ function App() {
             element={
               <EstateDocumentPage key="healthcare" householdId={householdId!} type="HealthcareDirective" />
             }
+          />
+          <Route
+            path="/living-will"
+            element={<EstateDocumentPage key="living-will" householdId={householdId!} type="LivingWill" />}
           />
           <Route path="/trust" element={<Trust householdId={householdId!} />} />
           <Route path="/vault" element={<Vault householdId={householdId!} />} />

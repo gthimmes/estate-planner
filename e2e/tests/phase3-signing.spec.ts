@@ -46,12 +46,12 @@ test.describe('Phase 3: done means signed', () => {
     await page.getByLabel(/date signed/i).fill(today)
     await page.getByRole('button', { name: /i signed it/i }).click()
     await expect(page.getByRole('heading', { name: /your will is signed/i })).toBeVisible()
-    await expect(page.getByText(/witnessed by Wanda Witness and Wesley Witness/i)).toBeVisible()
-    await expect(page.getByText(/fireproof safe in the study/i)).toBeVisible()
+    await expect(page.getByText(/witnessed by Wanda Witness and Wesley Witness/i).first()).toBeVisible()
+    await expect(page.getByText(/fireproof safe in the study/i).first()).toBeVisible()
 
     // Dashboard: household + family + will + sign = 4/9 → 44%, sign item checked with storage location
     await page.getByRole('navigation').getByRole('link', { name: 'Dashboard' }).click()
-    await expect(page.getByText(/original stored: fireproof safe in the study/i)).toBeVisible()
+    await expect(page.getByText(/original stored: fireproof safe in the study/i).first()).toBeVisible()
     await expect(page.getByRole('img', { name: /estate readiness/i })).toHaveAccessibleName(
       /44 percent/,
     )

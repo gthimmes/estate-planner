@@ -115,11 +115,12 @@ public class TrustAndVaultTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     {
         var (householdId, self, spouse) = await SetUpFamily();
 
-        // Nothing started: all four documents show NotStarted
+        // Nothing started: all five documents show NotStarted
         var vault = await _client.GetFromJsonAsync<VaultSummaryResponse>(
             $"/api/households/{householdId}/vault", Json);
-        Assert.Equal(4, vault!.Documents.Count);
+        Assert.Equal(5, vault!.Documents.Count);
         Assert.All(vault.Documents, d => Assert.Equal("NotStarted", d.Status));
+        Assert.Contains(vault.Documents, d => d.Title == "Living will");
 
         // Execute the will; the vault reflects status and storage location
         await _client.PutAsJsonAsync($"/api/households/{householdId}/will", new SaveWillRequest(

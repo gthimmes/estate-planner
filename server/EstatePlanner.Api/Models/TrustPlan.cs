@@ -17,6 +17,11 @@ public class TrustPlan
     public DocumentStatus Status { get; set; }
     public DateOnly? ExecutedOn { get; set; }
     public string? ExecutedStateCode { get; set; }
+    /// <summary>E-signature (ported concept from the user's e-sign/InkWell project, MIT):
+    /// trimmed PNG data URL, SHA-256 of the image bytes, and when it was adopted.</summary>
+    public string? SignatureImage { get; set; }
+    public string? SignatureHash { get; set; }
+    public DateTimeOffset? SignedAtUtc { get; set; }
     public string? ExecutionNotes { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 
@@ -26,6 +31,9 @@ public class TrustPlan
     {
         ExecutedOn = null;
         ExecutedStateCode = null;
+        SignatureImage = null;
+        SignatureHash = null;
+        SignedAtUtc = null;
         ExecutionNotes = null;
     }
 }

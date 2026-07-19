@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from '../api'
 import { MARITAL_STATUS_LABELS, US_STATES, type MaritalStatus } from '../types'
 
@@ -9,11 +9,16 @@ export function Settings({ householdId }: { householdId: string }) {
   const [loaded, setLoaded] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // A late duplicate response (StrictMode double-mount) must never clobber
+  // fields the user has already edited.
+  const initialized = useRef(false)
 
   useEffect(() => {
     api
       .getHousehold(householdId)
       .then((h) => {
+        if (initialized.current) return
+        initialized.current = true
         setName(h.name)
         setStateCode(h.stateCode)
         setMaritalStatus(h.maritalStatus)

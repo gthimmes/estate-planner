@@ -53,6 +53,7 @@ public class VaultController(AppDbContext db, TimeProvider time) : ControllerBas
         {
             (EstateDocumentType.FinancialPoa, "poa", "Financial power of attorney"),
             (EstateDocumentType.HealthcareDirective, "healthcare", "Advance healthcare directive"),
+            (EstateDocumentType.LivingWill, "living-will", "Living will"),
         })
         {
             var docs = household.Documents.Where(d => d.Type == type).ToList();

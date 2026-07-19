@@ -33,6 +33,11 @@ public class WillPlan
     public DateOnly? ExecutedOn { get; set; }
     /// <summary>State law the document was signed under; a later move flags it for review.</summary>
     public string? ExecutedStateCode { get; set; }
+    /// <summary>E-signature (ported concept from the user's e-sign/InkWell project, MIT):
+    /// trimmed PNG data URL, SHA-256 of the image bytes, and when it was adopted.</summary>
+    public string? SignatureImage { get; set; }
+    public string? SignatureHash { get; set; }
+    public DateTimeOffset? SignedAtUtc { get; set; }
     public string? Witness1Name { get; set; }
     public string? Witness2Name { get; set; }
     /// <summary>Where the signed original lives — "where's the will?" is the classic probate problem.</summary>
@@ -43,6 +48,9 @@ public class WillPlan
     {
         ExecutedOn = null;
         ExecutedStateCode = null;
+        SignatureImage = null;
+        SignatureHash = null;
+        SignedAtUtc = null;
         Witness1Name = null;
         Witness2Name = null;
         StorageLocation = null;

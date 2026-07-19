@@ -13,6 +13,27 @@ export function LegalDocumentView({ doc }: { doc: WillDocument }) {
           ))}
         </section>
       ))}
+      {doc.signing && (
+        <section className="signing-record" aria-label="Signing record">
+          <h3>Signing Record</h3>
+          {doc.signing.signatureImage && (
+            <img
+              className="signature-image"
+              src={doc.signing.signatureImage}
+              alt={`Adopted signature of ${doc.testatorName}`}
+            />
+          )}
+          <p>
+            Executed on {doc.signing.executedOn}.{doc.signing.detail ? ` ${doc.signing.detail}` : ''}
+          </p>
+          {doc.signing.signatureHash && (
+            <p className="signature-fingerprint">
+              Electronic signature adopted {doc.signing.signedAtUtc} · SHA-256{' '}
+              {doc.signing.signatureHash}
+            </p>
+          )}
+        </section>
+      )}
       <footer className="doc-disclosure">{doc.disclosure}</footer>
     </article>
   )

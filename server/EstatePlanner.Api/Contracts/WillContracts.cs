@@ -21,7 +21,15 @@ public record MarkExecutedRequest(
     DateOnly ExecutedOn,
     string Witness1Name,
     string Witness2Name,
-    string StorageLocation);
+    string StorageLocation,
+    string? SignatureImage = null);
+
+public record SigningRecord(
+    string? SignatureImage,
+    string? SignatureHash,
+    DateTimeOffset? SignedAtUtc,
+    DateOnly? ExecutedOn,
+    string? Detail);
 
 public record WillPlanResponse(
     Guid Id,
@@ -77,4 +85,5 @@ public record WillDocumentResponse(
     IReadOnlyList<DocumentArticle> Articles,
     ExecutionRequirements Execution,
     IReadOnlyList<string> BeneficiaryConflictNotes,
-    string Disclosure);
+    string Disclosure,
+    SigningRecord? Signing = null);

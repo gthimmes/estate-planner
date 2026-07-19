@@ -94,7 +94,9 @@ public class WillService(TimeProvider time)
         var testator = people.FirstOrDefault(p => p.Id == will.TestatorPersonId);
         var testatorName = testator is null ? "________________" : $"{testator.FirstName} {testator.LastName}";
         var spouse = people.FirstOrDefault(p => p.Role == PersonRole.Spouse);
-        var children = people.Where(p => p.Role == PersonRole.Child).ToList();
+        var children = people.Where(p => p.Role == PersonRole.Child)
+            .OrderBy(c => c.DateOfBirth ?? DateOnly.MaxValue).ThenBy(c => c.FirstName)
+            .ToList();
         var minors = people.Where(p => p.IsMinor(Today)).ToList();
 
         var articles = new List<DocumentArticle>
@@ -189,6 +191,10 @@ public class WillService(TimeProvider time)
             Articles: articles,
             Execution: StateExecutionRules.For(household.StateCode),
             BeneficiaryConflictNotes: conflictNotes,
-            Disclosure: Disclosure);
+            Disclosure: Disclosure,
+            Signing: will.Status == WillStatus.Executed
+                ? new SigningRecord(will.SignatureImage, will.SignatureHash, will.SignedAtUtc, will.ExecutedOn,
+                    $"Witnessed by {will.Witness1Name} and {will.Witness2Name}. Original stored: {will.StorageLocation}.")
+                : null);
     }
 }

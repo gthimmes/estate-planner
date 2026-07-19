@@ -141,6 +141,9 @@ public class TrustService(TimeProvider time)
                     "Retitling real estate requires recording a new deed; many people use a title company or attorney for that step.",
                 ]),
             BeneficiaryConflictNotes: [],
-            Disclosure: WillService.Disclosure);
+            Disclosure: WillService.Disclosure,
+            Signing: trust.Status == DocumentStatus.Executed
+                ? new SigningRecord(trust.SignatureImage, trust.SignatureHash, trust.SignedAtUtc, trust.ExecutedOn, trust.ExecutionNotes)
+                : null);
     }
 }
