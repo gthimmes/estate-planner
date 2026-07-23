@@ -65,7 +65,8 @@ Quality gate: every feature ships with xUnit integration tests (real Postgres vi
 - [x] Recorded full-product demo (Playwright video) doubling as top-to-bottom validation
 - [x] Accounts & authentication: cookie sessions, hashed passwords, per-user household
       isolation via a global ownership filter, claim flow for pre-auth data
-- [ ] Executor / family scoped sharing
+- [x] Executor / family sharing: single-use invite links, read-only access enforced
+      server-side, plan switcher, instant revoke
 - [ ] Estate-tax awareness (verify current federal/state figures first)
 - [ ] Document file uploads in the vault
 
