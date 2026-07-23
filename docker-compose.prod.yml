@@ -1,0 +1,43 @@
+# Production-shaped stack: postgres + API + nginx-served client.
+#   docker compose -f docker-compose.prod.yml up -d --build
+# Set ESTATE_DB_PASSWORD in the environment (or a .env file) before running.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: estate
+      POSTGRES_PASSWORD: ${ESTATE_DB_PASSWORD:?set ESTATE_DB_PASSWORD}
+      POSTGRES_DB: estate_planner
+    volumes:
+      - estate_prod_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U estate -d estate_planner"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./server/EstatePlanner.Api
+    environment:
+      ConnectionStrings__Default: "Host=db;Port=5432;Database=estate_planner;Username=estate;Password=${ESTATE_DB_PASSWORD}"
+      ASPNETCORE_ENVIRONMENT: Production
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # The aspnet base image ships no curl/wget; bash's /dev/tcp works everywhere.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+
+  web:
+    build: ./client
+    ports:
+      - "${ESTATE_WEB_PORT:-8090}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  estate_prod_pgdata:

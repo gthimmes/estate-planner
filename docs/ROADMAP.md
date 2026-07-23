@@ -67,8 +67,12 @@ Quality gate: every feature ships with xUnit integration tests (real Postgres vi
       isolation via a global ownership filter, claim flow for pre-auth data
 - [x] Executor / family sharing: single-use invite links, read-only access enforced
       server-side, plan switcher, instant revoke
-- [ ] Estate-tax awareness (verify current federal/state figures first)
-- [ ] Document file uploads in the vault
+- [x] Estate-tax awareness: verified July 2026 figures ($15M federal, 12 states + DC
+      estate tax, 5 inheritance states), dashboard notes with disclaimers
+- [x] Document file uploads in the vault
+
+- [x] Deployment packaging: multi-stage Docker images (API + nginx client),
+      docker-compose.prod.yml with healthchecks and env-driven secrets, smoke-tested
 
 ## Standing research follow-ups
 - 2026 e-will / remote-online-notarization state-by-state status

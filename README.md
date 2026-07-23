@@ -28,6 +28,18 @@ cd client; npm test            # Vitest + React Testing Library
 cd e2e; npx playwright test    # E2E — boots API + client itself (needs Docker for the dev db)
 ```
 
+## Deploy
+
+The whole stack ships as containers — Postgres, the API, and an nginx-served client with `/api` proxying:
+
+```powershell
+$env:ESTATE_DB_PASSWORD = 'choose-a-strong-password'
+docker compose -f docker-compose.prod.yml up -d --build
+# app on http://localhost:8090 (override with ESTATE_WEB_PORT)
+```
+
+Migrations apply automatically on API startup. Put TLS in front (a reverse proxy such as Caddy or Traefik) before exposing it beyond localhost.
+
 ## Legal posture
 
 This software provides self-help forms and information, not legal advice, and is not a substitute for an attorney. See `docs/RESEARCH.md` for the UPL compliance constraints that shape the product.
