@@ -10,7 +10,10 @@ import { Will } from './pages/Will'
 import { WillDocument } from './pages/WillDocument'
 import { EstateDocumentPage } from './pages/EstateDocumentPage'
 import { ExecutorGuide } from './pages/ExecutorGuide'
+import { RedeemShare } from './pages/RedeemShare'
 import { Settings } from './pages/Settings'
+import { Sharing } from './pages/Sharing'
+import { PlanSwitcher } from './components/PlanSwitcher'
 import { Trust } from './pages/Trust'
 import { Vault } from './pages/Vault'
 
@@ -35,6 +38,15 @@ function App() {
 
   if (authState === 'anon') {
     return <Auth onAuthed={() => setAuthState('authed')} />
+  }
+
+  // Redeeming an invite works with or without an existing plan of your own.
+  if (location.pathname.startsWith('/share/')) {
+    return (
+      <Routes>
+        <Route path="/share/:token" element={<RedeemShare />} />
+      </Routes>
+    )
   }
 
   if (!householdId && location.pathname !== '/welcome') {
@@ -65,7 +77,9 @@ function App() {
         <NavLink to="/trust">Living trust</NavLink>
         <NavLink to="/vault">Vault</NavLink>
         <NavLink to="/executor-guide">Executor's guide</NavLink>
+        <NavLink to="/sharing">Sharing</NavLink>
         <NavLink to="/settings">Life changes</NavLink>
+        <PlanSwitcher />
         <button
           className="link signout"
           onClick={async () => {
@@ -103,6 +117,7 @@ function App() {
           <Route path="/trust" element={<Trust householdId={householdId!} />} />
           <Route path="/vault" element={<Vault householdId={householdId!} />} />
           <Route path="/executor-guide" element={<ExecutorGuide householdId={householdId!} />} />
+          <Route path="/sharing" element={<Sharing householdId={householdId!} />} />
           <Route path="/settings" element={<Settings householdId={householdId!} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

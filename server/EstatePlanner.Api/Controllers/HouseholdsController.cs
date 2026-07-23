@@ -57,11 +57,17 @@ public class HouseholdsController(AppDbContext db) : ControllerBase
     public async Task<ActionResult<List<HouseholdResponse>>> List()
     {
         var userId = this.GetUserId();
-        return await db.Households
+        var owned = await db.Households
             .Where(h => h.OwnerUserId == userId)
             .OrderBy(h => h.CreatedAt)
-            .Select(h => HouseholdResponse.From(h))
+            .Select(h => HouseholdResponse.From(h, "Owner"))
             .ToListAsync();
+        var shared = await db.HouseholdShares
+            .Where(s => s.SharedWithUserId == userId)
+            .OrderBy(s => s.RedeemedAt)
+            .Select(s => HouseholdResponse.From(s.Household!, s.Role.ToString()))
+            .ToListAsync();
+        return owned.Concat(shared).ToList();
     }
 
     /// <summary>Adopts a pre-authentication (ownerless) household into this account.
@@ -81,7 +87,15 @@ public class HouseholdsController(AppDbContext db) : ControllerBase
     public async Task<ActionResult<HouseholdResponse>> Get(Guid householdId)
     {
         var household = await db.Households.FindAsync(householdId);
-        return household is null ? NotFound() : HouseholdResponse.From(household);
+        if (household is null) return NotFound();
+        var userId = this.GetUserId();
+        if (household.OwnerUserId == userId) return HouseholdResponse.From(household);
+        // The filter only lets non-owners in via a redeemed share.
+        var role = await db.HouseholdShares
+            .Where(s => s.HouseholdId == householdId && s.SharedWithUserId == userId)
+            .Select(s => s.Role.ToString())
+            .FirstAsync();
+        return HouseholdResponse.From(household, role);
     }
 
     [HttpPut("{householdId:guid}")]

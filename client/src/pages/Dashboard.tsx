@@ -41,6 +41,13 @@ export function Dashboard({ householdId }: { householdId: string }) {
 
   return (
     <div className="dashboard">
+      {household.accessRole !== 'Owner' && (
+        <aside className="banner warning" role="note">
+          You're viewing this plan as{' '}
+          <strong>{household.accessRole === 'Executor' ? 'the executor' : 'family'}</strong> — it's
+          read-only. The owner can revoke access at any time.
+        </aside>
+      )}
       {stale.length > 0 && (
         <aside className="banner warning" role="note">
           <strong>You've moved — these documents were signed under another state's law:</strong>

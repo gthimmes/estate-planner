@@ -8,6 +8,8 @@ import type {
   MaritalStatus,
   MarkExecutedInput,
   Person,
+  Share,
+  ShareRole,
   TrustPlan,
   TrustPlanInput,
   VaultFileMeta,
@@ -76,6 +78,20 @@ export const api = {
     request<Household>('/api/households/claim', {
       method: 'POST',
       body: JSON.stringify({ householdId }),
+    }),
+
+  listShares: (householdId: string) => request<Share[]>(`/api/households/${householdId}/shares`),
+  createShare: (householdId: string, role: ShareRole, label: string | null) =>
+    request<Share>(`/api/households/${householdId}/shares`, {
+      method: 'POST',
+      body: JSON.stringify({ role, label }),
+    }),
+  revokeShare: (householdId: string, shareId: string) =>
+    request<void>(`/api/households/${householdId}/shares/${shareId}`, { method: 'DELETE' }),
+  redeemShare: (token: string) =>
+    request<{ householdId: string; householdName: string; role: ShareRole }>('/api/shares/redeem', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
     }),
 
   createHousehold: (input: HouseholdInput) =>

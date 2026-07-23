@@ -23,6 +23,19 @@ export interface Household {
   stateCode: string
   maritalStatus: MaritalStatus
   createdAt: string
+  accessRole: 'Owner' | 'Executor' | 'FamilyViewer'
+}
+
+export type ShareRole = 'Executor' | 'FamilyViewer'
+
+export interface Share {
+  id: string
+  role: ShareRole
+  label: string | null
+  inviteToken: string
+  sharedWithEmail: string | null
+  createdAt: string
+  redeemedAt: string | null
 }
 
 export interface Person {

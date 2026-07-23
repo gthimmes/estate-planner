@@ -14,6 +14,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<TrustPlan> TrustPlans => Set<TrustPlan>();
     public DbSet<VaultItem> VaultItems => Set<VaultItem>();
     public DbSet<VaultFile> VaultFiles => Set<VaultFile>();
+    public DbSet<HouseholdShare> HouseholdShares => Set<HouseholdShare>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,6 +60,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(t => t.DistributionStrategy).HasConversion<string>().HasMaxLength(30);
             e.Property(t => t.ExecutionNotes).HasMaxLength(500);
             e.OwnsMany(t => t.DistributionShares, b => b.ToJson());
+        });
+
+        modelBuilder.Entity<HouseholdShare>(e =>
+        {
+            e.HasOne(s => s.Household).WithMany(h => h.Shares).HasForeignKey(s => s.HouseholdId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(s => s.Role).HasConversion<string>().HasMaxLength(20);
+            e.Property(s => s.InviteToken).HasMaxLength(64);
+            e.HasIndex(s => s.InviteToken).IsUnique();
+            e.Property(s => s.Label).HasMaxLength(200);
+            e.Property(s => s.SharedWithEmail).HasMaxLength(320);
+            e.HasIndex(s => new { s.HouseholdId, s.SharedWithUserId });
         });
 
         modelBuilder.Entity<VaultFile>(e =>

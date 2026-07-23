@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 namespace EstatePlanner.Api.Controllers;
 
 /// <summary>
-/// One gate for all household data: any route with a householdId only proceeds
-/// if that household belongs to the signed-in user. Unknown and foreign
-/// households look identical (404) — no existence oracle.
+/// One gate for all household data: the owner gets full access; an account
+/// holding a redeemed share gets read-only access (GET only). Unknown and
+/// foreign households look identical (404) — no existence oracle.
 /// </summary>
 public class HouseholdOwnershipFilter(AppDbContext db) : IAsyncActionFilter
 {
@@ -27,8 +27,15 @@ public class HouseholdOwnershipFilter(AppDbContext db) : IAsyncActionFilter
             var owned = await db.Households.AnyAsync(h => h.Id == householdId && h.OwnerUserId == userId);
             if (!owned)
             {
-                context.Result = new NotFoundResult();
-                return;
+                var isReadRequest = HttpMethods.IsGet(context.HttpContext.Request.Method) ||
+                                    HttpMethods.IsHead(context.HttpContext.Request.Method);
+                var hasShare = isReadRequest && await db.HouseholdShares.AnyAsync(s =>
+                    s.HouseholdId == householdId && s.SharedWithUserId == userId);
+                if (!hasShare)
+                {
+                    context.Result = new NotFoundResult();
+                    return;
+                }
             }
         }
         await next();

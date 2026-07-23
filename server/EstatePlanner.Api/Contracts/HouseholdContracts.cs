@@ -12,9 +12,35 @@ public record UpdateHouseholdRequest(string Name, string StateCode, MaritalStatu
 
 public record ClaimHouseholdRequest(Guid HouseholdId);
 
-public record HouseholdResponse(Guid Id, string Name, string StateCode, MaritalStatus MaritalStatus, DateTimeOffset CreatedAt)
+public record CreateShareRequest(ShareRole Role, string? Label);
+
+public record RedeemShareRequest(string Token);
+
+public record RedeemShareResponse(Guid HouseholdId, string HouseholdName, ShareRole Role);
+
+public record ShareResponse(
+    Guid Id,
+    ShareRole Role,
+    string? Label,
+    string InviteToken,
+    string? SharedWithEmail,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? RedeemedAt)
 {
-    public static HouseholdResponse From(Household h) => new(h.Id, h.Name, h.StateCode, h.MaritalStatus, h.CreatedAt);
+    public static ShareResponse From(HouseholdShare s) =>
+        new(s.Id, s.Role, s.Label, s.InviteToken, s.SharedWithEmail, s.CreatedAt, s.RedeemedAt);
+}
+
+public record HouseholdResponse(
+    Guid Id,
+    string Name,
+    string StateCode,
+    MaritalStatus MaritalStatus,
+    DateTimeOffset CreatedAt,
+    string AccessRole = "Owner")
+{
+    public static HouseholdResponse From(Household h, string accessRole = "Owner") =>
+        new(h.Id, h.Name, h.StateCode, h.MaritalStatus, h.CreatedAt, accessRole);
 }
 
 public record PersonRequest(string FirstName, string LastName, PersonRole Role, DateOnly? DateOfBirth);
