@@ -108,6 +108,21 @@ export function Dashboard({ householdId }: { householdId: string }) {
         </div>
       </section>
 
+      {(dashboard.taxNotes?.length ?? 0) > 0 && (
+        <section className="card tax-awareness">
+          <h2>Estate &amp; inheritance tax awareness</h2>
+          <ul>
+            {dashboard.taxNotes!.map((note, i) => (
+              <li key={i}>{note}</li>
+            ))}
+          </ul>
+          <p className="hint">
+            Figures verified {dashboard.taxNotesVerifiedOn} and shown for awareness only — thresholds
+            change, and this is not tax or legal advice.
+          </p>
+        </section>
+      )}
+
       <section className="card">
         <h2>Your path to a complete plan</h2>
         <ReadinessChecklist items={dashboard.checklist} />

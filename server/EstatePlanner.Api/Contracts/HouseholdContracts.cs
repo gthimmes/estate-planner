@@ -89,4 +89,6 @@ public record DashboardResponse(
     int ReadinessScore,
     IReadOnlyList<ReadinessItem> Checklist,
     decimal ProbateExposedValue = 0m,
-    IReadOnlyList<string>? StaleStateDocuments = null);
+    IReadOnlyList<string>? StaleStateDocuments = null,
+    IReadOnlyList<string>? TaxNotes = null,
+    string? TaxNotesVerifiedOn = null);

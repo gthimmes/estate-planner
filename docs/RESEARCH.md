@@ -64,5 +64,5 @@ Convergent across the Illinois State Bar, California courts self-help, NCOA, and
 
 - Current (2026) state-by-state e-will / remote-online-notarization status — could remote execution be a differentiator?
 - LegalZoom current estate pricing; segmentation of uncovered competitors.
-- Current federal estate tax exemption and state estate/inheritance tax roster (one unverified source claimed $15M/person federal for 2026 — **verify before showing any tax guidance**), and how much tax awareness is safe without crossing into advice.
+- ~~Current federal estate tax exemption and state estate/inheritance tax roster~~ **Verified July 2026**: federal exemption is $15M/person ($30M/couple), permanent and inflation-indexed under the OBBBA (signed 2025-07-04). Twelve states + DC levy estate taxes (exemptions from OR's $1M to CT's federal-matched $15M); KY, MD, NE, NJ, PA levy inheritance taxes (MD has both); IA's inheritance tax fully repealed for deaths on/after 2025-01-01; NY has a ~105% "cliff"; WA rolls back to $3.0M on 2026-07-01. Sources: Forbes "Where Not To Die In 2026" (2026-05-15), Creative Planning state tax roundup, Morgan Lewis OBBBA alert. Encoded in `StateTaxRules.cs` with a verified-on date; shown as awareness with disclaimers, never advice.
 - Conversion benchmarks: how many users who draft a will actually execute it?

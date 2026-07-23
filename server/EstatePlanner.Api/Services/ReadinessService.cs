@@ -71,7 +71,9 @@ public class ReadinessService(TimeProvider time)
             ReadinessScore: score,
             Checklist: checklist,
             ProbateExposedValue: assets.Where(a => a.ProbateStatus == ProbateStatus.LikelyProbate).Sum(a => a.EstimatedValue),
-            StaleStateDocuments: StaleStateDocuments(household));
+            StaleStateDocuments: StaleStateDocuments(household),
+            TaxNotes: StateTaxRules.BuildNotes(household.StateCode, totalAssets - totalDebts),
+            TaxNotesVerifiedOn: StateTaxRules.VerifiedOn);
     }
 
     /// <summary>Executed documents signed under a different state's law than where the
