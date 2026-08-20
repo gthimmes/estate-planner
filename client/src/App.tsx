@@ -13,6 +13,7 @@ import { ExecutorGuide } from './pages/ExecutorGuide'
 import { RedeemShare } from './pages/RedeemShare'
 import { Settings } from './pages/Settings'
 import { Sharing } from './pages/Sharing'
+import { HelpWidget } from './components/HelpWidget'
 import { PlanSwitcher } from './components/PlanSwitcher'
 import { Trust } from './pages/Trust'
 import { Vault } from './pages/Vault'
@@ -93,6 +94,7 @@ function App() {
           Self-help forms and information — not legal advice, and not a substitute for an attorney.
         </p>
       </nav>
+      <HelpWidget />
       <div className="content">
         <Routes>
           <Route path="/" element={<Dashboard householdId={householdId!} />} />
